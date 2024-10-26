@@ -81,6 +81,12 @@ export const MessageList = ({
                                 new Date(prevMessage._creationTime),
                             ) < TIME_THRESHOLD;
 
+                        // Transform the reactions array
+                        const transformedReactions = message.reactions.map(reaction => ({
+                            ...reaction,
+                            memberId: reaction.memberIds // Adjust this transformation as needed
+                        }));
+
                         return (
                             <Message
                                 key={message._id}
@@ -89,7 +95,7 @@ export const MessageList = ({
                                 authorImage={message.user.image}
                                 authorName={message.user.name}
                                 isAuthor={message.memberId === currentMember?._id}
-                                reactions={message.reactions}
+                                reactions={transformedReactions} // Use the transformed reactions
                                 body={message.body}
                                 image={message.image}
                                 updatedAt={message.updatedAt}

@@ -69,7 +69,8 @@ export const WorkspaceSidebar = () => {
                 <WorkspaceSection
                     label="Channels"
                     hint="New channel"
-                    onNew={member.role === "admin" ? () => setOpen(true) : undefined}
+                    // Ensure onNew always receives a function
+                    onNew={member.role === "admin" ? () => setOpen(true) : () => {}}
                 >
                     {channels?.map(item => (
                         <SidebarItem 

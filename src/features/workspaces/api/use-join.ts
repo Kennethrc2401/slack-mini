@@ -38,7 +38,8 @@ export const useJoin = () => {
 
             const response = await mutation(values);
 
-            const workspaceId = response?._id || null;
+            // Assuming response is a string
+            const workspaceId = response || null;
 
             options?.onSuccess?.(workspaceId);
 
@@ -53,7 +54,7 @@ export const useJoin = () => {
             setStatus("settled");
             options?.onSettled?.();
         }
-    }, [mutation]);
+    }, [mutation, setData, setError, setStatus]);
 
     return {
         mutate,

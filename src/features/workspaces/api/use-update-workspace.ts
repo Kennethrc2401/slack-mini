@@ -46,8 +46,8 @@ export const useUpdateWorkspace = () => {
             // Call the mutation and get the response
             const response = await mutation(values);
 
-            // Check if response is not null and extract the ID
-            const workspaceId = response?._id || null;
+            // Use the response directly as the workspace ID
+            const workspaceId = response || null;
 
             // Handle success callback
             options?.onSuccess?.(workspaceId);
@@ -62,11 +62,10 @@ export const useUpdateWorkspace = () => {
                 throw error;
             }
         } finally {
-            // Update status to settled
             setStatus("settled");
             options?.onSettled?.();
         }
-    }, [mutation]);
+    }, [mutation, setData, setError, setStatus]);
 
     // Return the state and the mutate function
     return {
