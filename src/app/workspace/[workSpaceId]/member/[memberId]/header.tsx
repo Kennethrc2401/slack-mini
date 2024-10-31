@@ -117,7 +117,7 @@ export const Header = ({
         if (onClick) onClick();
     };
 
-    if (isLoadingMember || isLoadingCurrentMember) {
+    if (isLoadingMember || isLoadingCurrentMember || isUpdatingMember || isRemovingMember) {
         return (
             <div className="h-full flex flex-1 items-center justify-center">
                 <Loader className="animate-spin size-6 text-muted-foreground" />

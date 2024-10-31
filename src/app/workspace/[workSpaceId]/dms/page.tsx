@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Id } from '../../../../../convex/_generated/dataModel';
-import { Form } from '@/components/ui/form';
+// import { Form } from '@/components/ui/form';
 
 import { useGetDMs } from '@/features/dms/api/use-get-dms';
 import { useCurrentMember } from '@/features/members/api/use-current-member';
@@ -104,7 +104,14 @@ const DMsLandingPage = () => {
                 ))}
             </ul>
             <div className="mt-6">
-                <Form onSubmit={handleCreateNewDM} className="space-y-4">
+                {/* <Form> */}
+                    <form
+                        className="space-y-4"
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            handleCreateNewDM();
+                        }}
+                    >
                     <input
                         type="text"
                         value={newDMBody}
@@ -115,7 +122,8 @@ const DMsLandingPage = () => {
                     <button type="button" onClick={handleCreateNewDM} className="mt-4 w-full bg-blue-500 text-white p-2 rounded">
                         Send
                     </button>
-                </Form>
+                    </form>
+                {/* </Form> */}
             </div>
         </div>
     );
