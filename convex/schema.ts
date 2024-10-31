@@ -82,7 +82,30 @@ const schema = defineSchema({
     })
     .index("by_member_id", ["memberId"])
     .index("by_workspace_id", ["workspaceId"]),
-
+    mentions: defineTable({
+        workspaceId: v.id("workspaces"),
+        messageId: v.id("messages"),
+        mentionedMemberId: v.id("members"),
+        mentioningMemberId: v.id("members"),
+        createdAt: v.number(),
+    }).index("by_workspace_id", ["workspaceId"]),
+    todos: defineTable({
+        workspaceId: v.id("workspaces"),
+        memberId: v.id("members"),
+        task: v.string(),
+        isComplete: v.boolean(),
+        createdAt: v.number(),
+    })
+    .index("by_workspace_id", ["workspaceId"])
+    .index("by_member_id", ["memberId"]),
+    events: defineTable({
+        workspaceId: v.id("workspaces"),
+        date: v.string(), // Store as YYYY-MM-DD
+        title: v.string(),
+        description: v.optional(v.string()),
+        createdAt: v.number(),
+    }).index("by_workspace_id_date", ["workspaceId", "date"])
+        .index("by_workspace_id", ["workspaceId"]),
 });
 
 

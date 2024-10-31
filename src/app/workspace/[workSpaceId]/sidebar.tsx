@@ -45,10 +45,14 @@ export const Sidebar = () => {
             <SidebarButton 
                 icon={CalendarDays}
                 label="Calendar"
+                isActive={pathname.startsWith(`/workspace/${workspaceId}/calendar`)}
+                onClick={() => router.push(`/workspace/${workspaceId}/calendar`)}
             />
             <SidebarButton
                 icon={FaTasks}
                 label="Todos"
+                isActive={pathname.startsWith(`/workspace/${workspaceId}/todos`)}
+                onClick={() => router.push(`/workspace/${workspaceId}/todos`)}
             />
             <DropdownMenu>
                 <DropdownMenuTrigger>
