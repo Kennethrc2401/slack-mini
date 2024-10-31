@@ -55,6 +55,7 @@ export const Reactions = ({
                                 "text-blue-500",
                         )}
                     >
+                        {reaction.count}
                     </span>
                 </button>
             </Hint>

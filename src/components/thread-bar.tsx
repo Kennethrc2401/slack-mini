@@ -50,6 +50,5 @@ export const ThreadBar = ({
             </div>
             <ChevronRight className="size-4 text-muted-foreground ml-auto opacity-0 group-hover/thread-bar:opacity-100 transition shrink-0" />
         </button>
-    )
-
-}
+    );
+};

@@ -2,8 +2,13 @@ import { useEffect } from 'react';
 import throttle from 'lodash.throttle';
 import { useProfileMemberId } from "@/features/members/store/use-profile-member-id";
 import { useParentMessageId } from "@/features/messages/store/use-parent-message-id";
+import { useRouter } from 'next/navigation';
+import { useWorkspaceId } from './use-workspace-id';
 
 export const usePanel = () => {
+    const router = useRouter();
+    const workspaceId = useWorkspaceId();
+
     const [parentMessageId, setParentMessageId] = useParentMessageId();
     const [profileMemberId, setProfileMemberId] = useProfileMemberId();
 
@@ -15,16 +20,23 @@ export const usePanel = () => {
 
     useEffect(() => {
         throttledUpdateURL();
-    }, [parentMessageId, profileMemberId]);
+    }, [parentMessageId, profileMemberId, throttledUpdateURL]);
+
+
+    const onVisitProfile = (memberId: string) => {
+        console.log("Visiting profile", memberId);
+
+        router.push(`/workspace/${workspaceId}/member/${memberId}`);
+    };
 
     const onOpenProfile = (memberId: string) => {
         console.log("Opening profile", memberId);
         console.log("Current parentMessageId:", parentMessageId);
         console.log("Current profileMemberId:", profileMemberId);
         setProfileMemberId(memberId);
-        if (parentMessageId !== null) {
-            setParentMessageId(null);
-        }
+        // if (parentMessageId !== null) {
+        //     setParentMessageId(null);
+        // }
     };
 
     const onOpenMessage = (messageId: string) => {
@@ -32,9 +44,9 @@ export const usePanel = () => {
         console.log("Current parentMessageId:", parentMessageId);
         console.log("Current profileMemberId:", profileMemberId);
         setParentMessageId(messageId);
-        if (profileMemberId !== null) {
-            setProfileMemberId(null);
-        }
+        // if (profileMemberId !== null) {
+        //     setProfileMemberId(null);
+        // }
     };
 
     const onClose = () => {
@@ -46,6 +58,7 @@ export const usePanel = () => {
     return {
         parentMessageId,
         profileMemberId,
+        onVisitProfile,
         onOpenProfile,
         onOpenMessage,
         onClose,

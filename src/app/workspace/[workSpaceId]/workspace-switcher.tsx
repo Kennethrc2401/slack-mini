@@ -14,7 +14,7 @@ import { useGetWorkspaces } from "@/features/workspaces/api/use-get-workspaces";
 import { useCreateWorkspaceModal } from "@/features/workspaces/store/use-create-workspace-modal";
 import { useWorkspaceId } from "@/hooks/use-workspace-id";
 
-
+import "@/app/globals.css";
 
 
 export const WorkspaceSwitcher = () => {

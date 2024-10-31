@@ -1,20 +1,21 @@
 import { useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import Quill from "quill";
+import { differenceInMinutes, format, isToday, isYesterday } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Message } from "@/components/message";
 import { AlertTriangle, Loader, XIcon } from "lucide-react";
 import { Id } from "../../../../convex/_generated/dataModel";
+import { toast } from "sonner";
 
-import { useGetMessage } from "@/features/messages/api/use-get-message";
 import { useWorkspaceId } from "@/hooks/use-workspace-id";
 import { useCurrentMember } from "@/features/members/api/use-current-member";
-import Quill from "quill";
+import { useChannelId } from "@/hooks/use-channel-id";
+import { useGetMessage } from "@/features/messages/api/use-get-message";
 import { useCreateMessage } from "@/features/messages/api/use-create-message";
 import { useGenerateUploadUrl } from "@/features/upload/api/use-generate-upload-url";
-import { useChannelId } from "@/hooks/use-channel-id";
-import { toast } from "sonner";
 import { useGetMessages } from "@/features/messages/api/use-get-messages";
-import { differenceInMinutes, format, isToday, isYesterday } from "date-fns";
+import { useLogActivity } from "@/features/activity/api/use-log-activity";
 
 const Editor = dynamic(() => import("@/components/editor"), { ssr: false });
 
@@ -43,6 +44,7 @@ const formatDateLabel = (dateStr: string) => {
 export const Thread = ({ messageId, onClose }: ThreadProps) => {
     const channelId = useChannelId();
     const workspaceId = useWorkspaceId();
+    const logActivity = useLogActivity();
 
     const [editingId, setEditingId] = useState<Id<"messages"> | null>(null);
     const [editorKey, setEditorKey] = useState(0);
@@ -113,6 +115,14 @@ export const Thread = ({ messageId, onClose }: ThreadProps) => {
                 throwError: true,
             });
 
+            logActivity({
+                messageId,
+                workspaceId,
+                actionType: "reply",
+                conversationId: message?.conversationId as Id<"conversations">,
+                initiatorMemberId: currentMember?._id,
+                actionDetails: body,
+            });
             setEditorKey((prevKey) => prevKey + 1);
         } catch (error) {
             toast.error(`Failed to send message: ${error}`);

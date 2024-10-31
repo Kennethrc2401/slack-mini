@@ -69,6 +69,8 @@ export const Message = ({
     threadName,
     threadTimestamp,
 }: MessageProps) => {
+    // const router = useRouter();
+
     const { parentMessageId, onOpenMessage, onOpenProfile, onClose } = usePanel();
     const [ConfirmDialog, confirm] = useConfirm(
         "Delete message",

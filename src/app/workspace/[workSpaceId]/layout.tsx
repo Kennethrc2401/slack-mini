@@ -23,7 +23,7 @@ interface WorkspaceIdLayoutProps {
 const WorkspaceIdLayout = ({ children }: WorkspaceIdLayoutProps) => {
   const { parentMessageId, profileMemberId, onClose } = usePanel();
 
-  const showPanel = !!parentMessageId && !!profileMemberId;
+  const showPanel = !!parentMessageId || !!profileMemberId;
 
   return (
     <NuqsAdapter>

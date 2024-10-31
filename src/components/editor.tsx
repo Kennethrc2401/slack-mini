@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { useRef, useEffect, MutableRefObject, useLayoutEffect, useState } from "react";
 import { PiTextAa } from "react-icons/pi";
 import { MdSend } from "react-icons/md";
-import { ImageIcon, Smile, XIcon } from "lucide-react";
+import { FilePlus, ImageIcon, Smile, XIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import Image from "next/image";
 
@@ -219,6 +219,7 @@ const Editor = ({
                         </Button>
                     </EmojiPopover>
                     {variant === "create" && (
+                        <>
                         <Hint label="Image">
                             <Button
                                 disabled={disabled}
@@ -229,6 +230,17 @@ const Editor = ({
                                 <ImageIcon className="size-4"/>
                             </Button>
                         </Hint>
+                        <Hint label="File">
+                            <Button
+                                disabled={disabled}
+                                size={"iconSm"}
+                                variant={"ghost"}
+                                onClick={() => {}}
+                            >
+                                <FilePlus className="size-4"/>
+                            </Button>
+                        </Hint>
+                        </>
                     )}
                     {variant === "update" && (
                         <div className="ml-auto flex items-center gap-x-20">

@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useCurrentUser } from "@/features/auth/api/use-current-user";
 import { useAuthActions } from "@convex-dev/auth/react";
-import { Loader, LogOut } from "lucide-react";
+import { Loader, LogOut, Settings, User2Icon } from "lucide-react";
 
 export const UserButton = () => {
     const { signOut } = useAuthActions();
@@ -50,11 +50,27 @@ export const UserButton = () => {
                 className="w-60"
             >
                 <DropdownMenuItem
+                    className="h-10"
+                >
+                    <User2Icon
+                        className="size-4 mr-2 text-[#5C3B58]"
+                    />
+                    Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                    className="h-10"
+                >
+                    <Settings
+                        className="size-4 mr-2 text-[#5C3B58]"
+                    />
+                    Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem
                     onClick={() => signOut()}
                     className="h-10"
                 >
                     <LogOut 
-                        className="size-4 mr-2"
+                        className="size-4 mr-2  text-[#5C3B58]"
                     />
                     Log out
                 </DropdownMenuItem>
