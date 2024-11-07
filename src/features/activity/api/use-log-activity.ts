@@ -3,12 +3,13 @@ import { api } from "../../../../convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
 
 interface UseLogActivityProps {
-    messageId: Id<"messages">;
+    messageId?: Id<"messages">;
     workspaceId: Id<"workspaces">;
-    actionType: "reply" | "mention" | "new_message";
+    actionType: "reply" | "mention" | "new_message" | "reaction";
     conversationId?: Id<"conversations">;
     initiatorMemberId?: Id<"members">;
     actionDetails?: string;
+    initiatorName: string;
 }
 
 export const useLogActivity = () => {
@@ -21,6 +22,7 @@ export const useLogActivity = () => {
         conversationId,
         initiatorMemberId,
         actionDetails,
+        initiatorName,
     }: UseLogActivityProps) => {
         try {
             await logActivity({
@@ -30,6 +32,7 @@ export const useLogActivity = () => {
                 conversationId,
                 initiatorMemberId,
                 actionDetails,
+                initiatorName,
             });
         } catch (error) {
             console.error("Failed to log activity:", error);

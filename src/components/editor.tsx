@@ -13,6 +13,11 @@ import { EmojiPopover } from "./emoji-popover";
 
 import "quill/dist/quill.snow.css";
 
+// import { useLogActivity } from "@/features/activity/api/use-log-activity";
+// import { useCurrentUser } from "@/features/auth/api/use-current-user";
+// import { useWorkspaceId } from "@/hooks/use-workspace-id";
+// import { useCurrentMember } from "@/features/members/api/use-current-member";
+
 type EditorValue = {
     image: File | null;
     body: string;
@@ -37,6 +42,11 @@ const Editor = ({
     disabled = false,
     innerRef,
 }: EditorProps) => {
+    // const workspaceId = useWorkspaceId();
+    // const currentMember = useCurrentMember({ workspaceId });
+    // const currentUser = useCurrentUser();
+    // const  handleLogActivity  = useLogActivity();
+
     const [text, setText] = useState("");
     const [image, setImage] = useState<File | null>(null);
     const [isToolbarVisible, setIsToolbarVisible] = useState(true);
@@ -148,10 +158,18 @@ const Editor = ({
         }
     };
 
-    const onEmojiSelect = (emojiValue: string) => {
+    const onEmojiSelect = async (emojiValue: string) => {
         const quill = quillRef.current;
 
         quill?.insertText(quill?.getSelection()?.index || 0, emojiValue);
+        
+        // await handleLogActivity({
+        //     workspaceId,
+        //     initiatorMemberId: currentMember.data?._id,
+        //     actionType: "reaction",
+        //     actionDetails: emojiValue,
+        //     initiatorName: currentUser.data?.name || "Unknown User",
+        // })
     };
 
     const isEmpty = !image && text.replace(/<(.|\n)*?>/g, "").trim().length === 0;

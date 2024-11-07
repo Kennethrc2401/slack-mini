@@ -6,11 +6,24 @@ interface UseMentionMemberArgs {
     workspaceId: Id<"workspaces">;
     messageId: Id<"messages">;
     mentionedMemberId: Id<"members">;
+    mentioningMemberId: Id<"members">;
+    initiatorName?: string;
 }
+
 
 export const useMentionMember = () => {
     const mentionMember = useMutation(api.mentions.createMention);
 
-    return ({ workspaceId, messageId, mentionedMemberId }: UseMentionMemberArgs) =>
-        mentionMember({ workspaceId, messageId, mentionedMemberId });
+    return ({ 
+        workspaceId, 
+        messageId, 
+        mentionedMemberId,
+        initiatorName = "",
+    }: UseMentionMemberArgs) =>
+        mentionMember({ 
+            workspaceId, 
+            messageId, 
+            mentionedMemberId, 
+            initiatorName,
+         });
 };

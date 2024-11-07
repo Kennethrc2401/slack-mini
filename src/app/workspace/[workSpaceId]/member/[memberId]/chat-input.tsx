@@ -1,11 +1,12 @@
 import { useRef, useState } from "react";
 import { useCreateMessage } from "@/features/messages/api/use-create-message";
-import { useWorkspaceId } from "@/hooks/use-workspace-id";
 import dynamic from "next/dynamic";
 import Quill from "quill";
 import { toast } from "sonner";
 import { useGenerateUploadUrl } from "@/features/upload/api/use-generate-upload-url";
 import { Id } from "../../../../../../convex/_generated/dataModel";
+
+import { useWorkspaceId } from "@/hooks/use-workspace-id";
 
 const Editor = dynamic(() => import("@/components/editor"), { ssr: false });
 

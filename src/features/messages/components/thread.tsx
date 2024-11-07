@@ -16,6 +16,7 @@ import { useCreateMessage } from "@/features/messages/api/use-create-message";
 import { useGenerateUploadUrl } from "@/features/upload/api/use-generate-upload-url";
 import { useGetMessages } from "@/features/messages/api/use-get-messages";
 import { useLogActivity } from "@/features/activity/api/use-log-activity";
+import { useCurrentUser } from "@/features/auth/api/use-current-user";
 
 const Editor = dynamic(() => import("@/components/editor"), { ssr: false });
 
@@ -44,6 +45,7 @@ const formatDateLabel = (dateStr: string) => {
 export const Thread = ({ messageId, onClose }: ThreadProps) => {
     const channelId = useChannelId();
     const workspaceId = useWorkspaceId();
+    const currentUser = useCurrentUser();
     const logActivity = useLogActivity();
 
     const [editingId, setEditingId] = useState<Id<"messages"> | null>(null);
@@ -122,6 +124,7 @@ export const Thread = ({ messageId, onClose }: ThreadProps) => {
                 conversationId: message?.conversationId as Id<"conversations">,
                 initiatorMemberId: currentMember?._id,
                 actionDetails: body,
+                initiatorName: currentUser?.data?.name as string,
             });
             setEditorKey((prevKey) => prevKey + 1);
         } catch (error) {

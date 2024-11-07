@@ -68,17 +68,19 @@ const schema = defineSchema({
     activity: defineTable({
         workspaceId: v.id("workspaces"),
         conversationId: v.optional(v.id("conversations")),
-        messageId: v.id("messages"),
+        messageId: v.optional(v.id("messages")),
         memberId: v.id("members"),            // The member the activity is for
         initiatorMemberId: v.optional(v.id("members")),  // The member who triggered the action
         actionType: v.union(
             v.literal("reply"), 
             v.literal("mention"), 
-            v.literal("new_message")
+            v.literal("new_message"),
+            v.literal("reaction")
         ),
         isRead: v.optional(v.boolean()), // Optional, default could be false
         actionDetails: v.optional(v.string()), // Additional context
         createdAt: v.number(),
+        initiatorName: v.string(),
     })
     .index("by_member_id", ["memberId"])
     .index("by_workspace_id", ["workspaceId"]),
@@ -88,7 +90,10 @@ const schema = defineSchema({
         mentionedMemberId: v.id("members"),
         mentioningMemberId: v.id("members"),
         createdAt: v.number(),
-    }).index("by_workspace_id", ["workspaceId"]),
+        initiatorName: v.optional(v.string()),
+    }).index("by_workspace_id", ["workspaceId"])
+      .index("by_message_id", ["messageId"])
+      .index("by_mentioned_member_id", ["mentionedMemberId"]),
     todos: defineTable({
         workspaceId: v.id("workspaces"),
         memberId: v.id("members"),

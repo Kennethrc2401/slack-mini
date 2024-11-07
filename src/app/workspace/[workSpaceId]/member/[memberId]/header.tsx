@@ -17,6 +17,7 @@ import { useRemoveMember } from "@/features/members/api/use-remove-member";
 import { toast } from "sonner";
 import { AlertTriangle, Loader, XIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface HeaderProps {
     memberName?: string;
@@ -155,93 +156,86 @@ export const Header = ({
             <RemoveDialog />
             <LeaveDialog />
             <UpdateDialog />
-            <div className="bg-white border-b h-[49px] flex items-center px-4 overflow-hidden">
-                <Button
-                    variant={"ghost"}
-                    className="text-lg font-semibold px-2 overflow-hidden w-auto"
-                    size={"sm"}
-                    onClick={() => {
-                        handleClick();
-                    }}
-                >
-                    <Avatar className="size-6 mr-2">
-                    <AvatarImage src={memberImage} alt={memberName} />
-                    <AvatarFallback>
-                        {avatarFallback}
-                    </AvatarFallback>
-                    </Avatar>
-                    <span className="truncate">
-                        {memberName}
-                    </span>
-                    <FaChevronDown 
-                        className={cn(
-                            "size-2.5 ml-2 text-muted-foreground transition-transform",
-                            menuVisible ? "rotate-180" : "rotate-0"
-                        )} 
-                    />
-                {menuVisible && (
-                    // Regular List without uiComponent
-                    <li 
-                        // Need the menu to apprear right below the button with avatar,not all the way on the right of the screen
-                        className="right-1 mt-2 flex items-center z-10 absolute w-48 bg-white border rounded shadow-lg overflow-hidden"
-                        onMouseLeave={() => setMenuVisible(false)}
-                     >
-                        <div 
-                            className="bg-white border rounded shadow-lg w-48 overflow-hidden z-10"
+            <DropdownMenu>
+                <DropdownMenuTrigger>
+                    <Button
+                        variant={"ghost"}
+                        className="text-lg font-semibold px-2 overflow-hidden w-auto"
+                        size={"sm"}
+                        onClick={() => {
+                            handleClick();
+                        }}
+                    >
+                        <Avatar className="size-6 mr-2">
+                            <AvatarImage src={memberImage} alt={memberName} />
+                            <AvatarFallback>
+                                {avatarFallback}
+                            </AvatarFallback>
+                        </Avatar>
+                        <span className="truncate">
+                            {memberName}
+                        </span>
+                        <FaChevronDown 
+                            className={cn(
+                                "size-2.5 ml-2 text-muted-foreground transition-transform",
+                                menuVisible ? "rotate-180" : "rotate-0"
+                            )} 
+                        />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    {currentMember?.role === "admin" && (
+                        <DropdownMenuItem
+                            className="flex items-center gap-x-2"
                         >
-                            <ul className="flex flex-col gap-y-1">
-                                {currentMember?.role === "admin" && (
-                                    <li>
-                                        <Button
-                                            variant={"ghost"}
-                                            className="w-full text-left hover:bg-gray-100"
-                                            size={"sm"}
-                                            onClick={() => {
-                                                onRole(member?.role === "admin" ? "member" : "admin")
-                                                // Close the menu after the action
-                                                setMenuVisible(false);
-                                            }}
-                                        >
-                                            {member?.role === "admin" ? "Demote" : "Promote"}
-                                        </Button>
-                                    </li>
-                                )}
-                                {currentMember?.role === "admin" && (
-                                    <li>
-                                        <Button
-                                            variant={"ghost"}
-                                            className="w-full text-left hover:bg-gray-100"
-                                            size={"sm"}
-                                            onClick={() => {
-                                                onRemove();
-                                                // Close the menu after the action
-                                                setMenuVisible(false);
-                                            }}
-                                        >
-                                            Remove
-                                        </Button>
-                                    </li>
-                                )}
-                                <li>
-                                    <Button
-                                        variant={"ghost"}
-                                        className="w-full text-left hover:bg-gray-100"
-                                        size={"sm"}
-                                        onClick={() => {
-                                            onLeave();
-                                            // Close the menu after the action
-                                            setMenuVisible(false);
-                                        }}
-                                    >
-                                        Leave
-                                    </Button>
-                                </li>
-                            </ul>
-                        </div>
-                    </li>
-                )}
-                </Button>
-            </div>
+                                <Button
+                                    variant={"ghost"}
+                                    className="w-full text-left hover:bg-gray-100"
+                                    size={"sm"}
+                                    onClick={() => {
+                                        onRole(member?.role === "admin" ? "member" : "admin")
+                                        // Close the menu after the action
+                                        setMenuVisible(false);
+                                    }}
+                                >
+                                    {member?.role === "admin" ? "Demote" : "Promote"}
+                                </Button>
+                            </DropdownMenuItem>
+                        )}
+                        {currentMember?.role === "admin" && (
+                            <DropdownMenuItem>
+                                <Button
+                                    variant={"ghost"}
+                                    className="w-full text-left hover:bg-gray-100"
+                                    size={"sm"}
+                                    onClick={() => {
+                                        onRemove();
+                                        // Close the menu after the action
+                                        setMenuVisible(false);
+                                    }}
+                                >
+                                    Remove
+                                </Button>
+                            </DropdownMenuItem>
+                        )}
+                        {currentMember?._id === memberId && (
+                            <DropdownMenuItem>
+                                <Button
+                                    variant={"ghost"}
+                                    className="w-full text-left hover:bg-gray-100"
+                                    size={"sm"}
+                                    onClick={() => {
+                                        onLeave();
+                                        // Close the menu after the action
+                                        setMenuVisible(false);
+                                    }}
+                                >
+                                    Leave
+                                </Button>
+                        </DropdownMenuItem>
+                        )}
+                </DropdownMenuContent>
+            </DropdownMenu>
         </>
     );
 };
