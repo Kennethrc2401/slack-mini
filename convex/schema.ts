@@ -111,6 +111,25 @@ const schema = defineSchema({
         createdAt: v.number(),
     }).index("by_workspace_id_date", ["workspaceId", "date"])
         .index("by_workspace_id", ["workspaceId"]),
+    userPreferences: defineTable({
+        workspaceId: v.id("workspaces"),
+        memberId: v.id("members"),
+        theme: v.optional(
+            v.union(
+                v.literal("light"),
+                v.literal("dark"),
+                v.literal("system"),
+                v.literal("lgbtq"),
+                v.literal("trans"),
+                v.literal("lesbian"),
+                v.literal("bi"),
+                v.literal("gay"),
+                v.literal("queer"),
+            )
+        ),
+    })
+    .index("by_workspace_id", ["workspaceId"])
+    .index("by_member_id", ["memberId"]),
 });
 
 

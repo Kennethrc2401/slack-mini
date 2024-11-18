@@ -9,13 +9,14 @@ import { useWorkspaceId } from "@/hooks/use-workspace-id";
 import { useGetWorkspace } from "@/features/workspaces/api/use-get-workspace";
 import { useGetChannels } from "@/features/channels/api/use-get-channels";
 import { useCurrentMember } from "@/features/members/api/use-current-member";
+import { Id } from "../../../../convex/_generated/dataModel";
 
 const WorkspaceIdPage = () => {
     const router = useRouter();
     const workspaceId = useWorkspaceId();
     const [open, setOpen] = useCreateChannelModal();
     
-    const { data: member, isLoading: memberLoading } = useCurrentMember({ workspaceId });
+    const { data: member, isLoading: memberLoading } = useCurrentMember({ workspaceId: workspaceId as Id<"workspaces"> });
     const { data: workspace, isLoading: workspaceLoading } = useGetWorkspace({ id: workspaceId });
     const { data: channels, isLoading: channelsLoading } = useGetChannels({ workspaceId });
     
@@ -73,4 +74,3 @@ const WorkspaceIdPage = () => {
 };
 
 export default WorkspaceIdPage;
-

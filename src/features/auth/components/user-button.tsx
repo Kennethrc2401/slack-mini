@@ -12,12 +12,16 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useCurrentUser } from "@/features/auth/api/use-current-user";
+import { useWorkspaceId } from "@/hooks/use-workspace-id";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { Loader, LogOut, Settings, User2Icon } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export const UserButton = () => {
+    const router = useRouter();
     const { signOut } = useAuthActions();
     const { data, isLoading } = useCurrentUser();
+    const workspaceId = useWorkspaceId();
 
     if (isLoading) {
         return <Loader className="size-4 animate-spin text-muted-foreground" />;
@@ -59,6 +63,7 @@ export const UserButton = () => {
                 </DropdownMenuItem>
                 <DropdownMenuItem
                     className="h-10"
+                    onClick={() => router.replace(`/workspace/${workspaceId}/settings`)}
                 >
                     <Settings
                         className="size-4 mr-2 text-[#5C3B58]"

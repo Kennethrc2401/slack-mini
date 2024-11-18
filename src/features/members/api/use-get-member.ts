@@ -14,7 +14,5 @@ export const useGetMember = ({ id }: UseGetMemberProps) => {
     return {
         data,
         isLoading,
-        // Name
-        // name: data?.user?.name,
     };
 }; 

@@ -26,6 +26,7 @@ import type * as messages from "../messages.js";
 import type * as reactions from "../reactions.js";
 import type * as todos from "../todos.js";
 import type * as upload from "../upload.js";
+import type * as userPreferences from "../userPreferences.js";
 import type * as users from "../users.js";
 import type * as workspaces from "../workspaces.js";
 
@@ -51,6 +52,7 @@ declare const fullApi: ApiFromModules<{
   reactions: typeof reactions;
   todos: typeof todos;
   upload: typeof upload;
+  userPreferences: typeof userPreferences;
   users: typeof users;
   workspaces: typeof workspaces;
 }>;
