@@ -1,42 +1,34 @@
 "use client";
 import { Id } from "../../../../../convex/_generated/dataModel";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { MdDisplaySettings } from "react-icons/md";
-import { AlertTriangle, ChevronDownIcon, Loader, MailIcon, Settings, Settings2, XIcon } from "lucide-react";
+import { AlertTriangle, Loader, MailIcon, Settings2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { toast } from "sonner";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuTrigger,
-    DropdownMenuRadioGroup,
-    DropdownMenuRadioItem,
-    DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
 
-import { useConfirm } from "@/hooks/use-confirm";
-import { UserPreferencesModal } from "@/features/userPreferences/components/user-preferences-modal";
+// import { useConfirm } from "@/hooks/use-confirm";
+// import { UserPreferencesModal } from "@/features/userPreferences/components/user-preferences-modal";
 
 import { useGetMember } from "@/features/members/api/use-get-member";
 // import { useUpdateMember } from "@/features/members/api/use-update-member";
 import { useWorkspaceId } from "@/hooks/use-workspace-id";
 import { useCurrentMember } from "@/features/members/api/use-current-member";
-import { useCurrentUser } from "@/features/auth/api/use-current-user";
+// import { useCurrentUser } from "@/features/auth/api/use-current-user";
 import { useGetMemberPreferences } from "@/features/userPreferences/api/useGetUserPreferences";
 
 import { useUserPreferencesModal } from "@/features/userPreferences/store/use-user-preferences-modal";
 
 
 const UserPreferencesPage = () => {
-    const router = useRouter();
+    // const router = useRouter();
     const workspaceId = useWorkspaceId();
-    const currentUser = useCurrentUser();
+    // const currentUser = useCurrentUser();
     const currentMember = useCurrentMember({ workspaceId });
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [_open, setOpen] = useUserPreferencesModal();
     
     const memberId = currentMember.data?._id as Id<"members">;
@@ -51,7 +43,7 @@ const UserPreferencesPage = () => {
 
 
     // Loading state
-    if (isLoadingMember) {
+    if (isLoadingMember || isLoadingUserPreferences) {
         return (
             <div className="flex items-center justify-center h-full">
                 <Loader />
@@ -65,6 +57,16 @@ const UserPreferencesPage = () => {
             <div className="flex items-center justify-center h-full">
                 <AlertTriangle size={48} />
                 <p className="text-lg mt-4">Member not found</p>
+            </div>
+        );
+    }
+
+    // Preferences not found
+    if (isPreferencesFailed) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <AlertTriangle size={48} />
+                <p className="text-lg mt-4">Preferences not found</p>
             </div>
         );
     }
