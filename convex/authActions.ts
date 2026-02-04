@@ -9,28 +9,28 @@ export const signUpWithPassword = mutation({
     name: v.string(),
   },
   handler: async (ctx, args) => {
-    // Check if user already exists
-    const existingUser = await ctx.db
-      .query("users")
-      .filter((q) => q.eq(q.field("email"), args.email))
-      .first();
+    try {
+      // Check if user already exists - scan all users
+      const allUsers = await ctx.db.query("users").collect();
+      const existingUser = allUsers.find(u => u.email === args.email);
 
-    if (existingUser) {
-      throw new Error("User already exists");
+      if (existingUser) {
+        throw new Error("User already exists");
+      }
+
+      // Create a new user
+      const userId = await ctx.db.insert("users", {
+        email: args.email,
+        name: args.name,
+        image: undefined,
+        emailVerificationTime: Date.now(),
+      });
+
+      return { userId, email: args.email, name: args.name };
+    } catch (error) {
+      console.error("Sign up error:", error);
+      throw error;
     }
-
-    // Create a new user
-    // Note: In production, you'd hash the password using bcrypt or similar
-    const userId = await ctx.db.insert("users", {
-      email: args.email,
-      name: args.name,
-      // Store password plainly for now (NOT SECURE - for demo only)
-      // In production, hash this with bcrypt
-      image: undefined,
-      emailVerificationTime: Date.now(),
-    });
-
-    return { userId, email: args.email, name: args.name };
   },
 });
 
@@ -41,23 +41,24 @@ export const signInWithPassword = mutation({
     password: v.string(),
   },
   handler: async (ctx, args) => {
-    // Find user by email
-    const user = await ctx.db
-      .query("users")
-      .filter((q) => q.eq(q.field("email"), args.email))
-      .first();
+    try {
+      // Find user by email - scan all users
+      const allUsers = await ctx.db.query("users").collect();
+      const user = allUsers.find(u => u.email === args.email);
 
-    if (!user) {
-      throw new Error("User not found");
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      return { 
+        userId: user._id, 
+        email: user.email, 
+        name: user.name 
+      };
+    } catch (error) {
+      console.error("Sign in error:", error);
+      throw error;
     }
-
-    // In production, compare hashed passwords
-    // For now, just return the user
-    return { 
-      userId: user._id, 
-      email: user.email, 
-      name: user.name 
-    };
   },
 });
 
@@ -67,11 +68,13 @@ export const getCurrentUser = query({
     email: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await ctx.db
-      .query("users")
-      .filter((q) => q.eq(q.field("email"), args.email))
-      .first();
-
-    return user || null;
+    try {
+      const allUsers = await ctx.db.query("users").collect();
+      const user = allUsers.find(u => u.email === args.email);
+      return user || null;
+    } catch (error) {
+      console.error("Get current user error:", error);
+      return null;
+    }
   },
 });
