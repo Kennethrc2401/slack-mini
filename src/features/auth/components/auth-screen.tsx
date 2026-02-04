@@ -14,7 +14,7 @@ export const AuthScreen = () => {
     const { userId, signInWithOAuth } = useAuthContext();
     const { data: session, status } = useSession();
     const hasHydrated = useRef(false);
-    const justLoggedOut = useRef(false);
+    const isFirstLoad = useRef(true);
 
     useEffect(() => {
         // If user is already logged in to Convex, redirect to workspace
@@ -24,35 +24,34 @@ export const AuthScreen = () => {
     }, [router, userId]);
 
     useEffect(() => {
-        // Check if user just logged out via query param
+        // Track if user just logged out
         if (typeof window !== "undefined") {
             const params = new URLSearchParams(window.location.search);
             if (params.has("logout")) {
-                justLoggedOut.current = true;
                 // Clean up the URL
                 window.history.replaceState({}, document.title, "/auth");
-                // Reset the flag after 2 seconds to allow re-login
+                // Don't allow immediate re-login for 2 seconds
                 const timer = setTimeout(() => {
-                    justLoggedOut.current = false;
+                    isFirstLoad.current = false;
                 }, 2000);
                 return () => clearTimeout(timer);
             }
         }
+        isFirstLoad.current = false;
     }, []);
 
     useEffect(() => {
         // Reset hydration flag when session becomes unauthenticated
         if (status === "unauthenticated") {
             hasHydrated.current = false;
-            justLoggedOut.current = true;
         }
     }, [status]);
 
     useEffect(() => {
         // Only sync once per session, and only if authenticated
-        // Don't auto-login if they just logged out
+        // Don't auto-login if they just logged out (first 2 seconds)
         if (hasHydrated.current) return;
-        if (justLoggedOut.current && status === "authenticated") {
+        if (isFirstLoad.current && status === "authenticated") {
             // User was just logged out, don't auto-login
             return;
         }
