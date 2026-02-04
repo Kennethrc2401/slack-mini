@@ -31,6 +31,11 @@ export const AuthScreen = () => {
                 justLoggedOut.current = true;
                 // Clean up the URL
                 window.history.replaceState({}, document.title, "/auth");
+                // Reset the flag after 2 seconds to allow re-login
+                const timer = setTimeout(() => {
+                    justLoggedOut.current = false;
+                }, 2000);
+                return () => clearTimeout(timer);
             }
         }
     }, []);
