@@ -14,6 +14,7 @@ export const AuthScreen = () => {
     const { userId, signInWithOAuth } = useAuthContext();
     const { data: session, status } = useSession();
     const hasHydrated = useRef(false);
+    const justLoggedOut = useRef(false);
 
     useEffect(() => {
         // If user is already logged in to Convex, redirect to workspace
@@ -23,15 +24,33 @@ export const AuthScreen = () => {
     }, [router, userId]);
 
     useEffect(() => {
+        // Check if user just logged out via query param
+        if (typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has("logout")) {
+                justLoggedOut.current = true;
+                // Clean up the URL
+                window.history.replaceState({}, document.title, "/auth");
+            }
+        }
+    }, []);
+
+    useEffect(() => {
         // Reset hydration flag when session becomes unauthenticated
         if (status === "unauthenticated") {
             hasHydrated.current = false;
+            justLoggedOut.current = true;
         }
     }, [status]);
 
     useEffect(() => {
         // Only sync once per session, and only if authenticated
+        // Don't auto-login if they just logged out
         if (hasHydrated.current) return;
+        if (justLoggedOut.current && status === "authenticated") {
+            // User was just logged out, don't auto-login
+            return;
+        }
         if (status === "authenticated" && session?.user?.email && !userId) {
             hasHydrated.current = true;
             const email = session.user.email;
