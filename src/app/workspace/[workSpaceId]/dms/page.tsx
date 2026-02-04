@@ -120,7 +120,7 @@ const DMsPage = () => {
                                     <DialogTitle>Start a new conversation</DialogTitle>
                                 </DialogHeader>
                                 <div className="space-y-3">
-                                    {allMembers?.data
+                                    {allMembers
                                         ?.filter((m) => m._id !== currentMember._id)
                                         .map((member) => (
                                             <button
@@ -217,7 +217,7 @@ const DMsPage = () => {
                                     <DialogTitle>Start a new conversation</DialogTitle>
                                 </DialogHeader>
                                 <div className="space-y-3">
-                                    {allMembers?.data
+                                    {allMembers
                                         ?.filter((m) => m._id !== currentMember._id)
                                         .map((member) => (
                                             <button
