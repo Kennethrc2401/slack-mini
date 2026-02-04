@@ -32,7 +32,7 @@ export const MessageFiles = ({ files }: MessageFilesProps) => {
                 return (
                     <a
                         key={file.id}
-                        href={file.url}
+                        href={file.url || undefined}
                         target="_blank"
                         rel="noopener noreferrer"
                         className={cn(
