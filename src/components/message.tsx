@@ -34,7 +34,7 @@ interface MessageProps {
         >;
     body: Doc<"messages">["body"];
     image: string | null | undefined;
-    files?: Array<{ id: string; url: string }>;
+    files?: Array<{ id: Id<"_storage">; url: string | null }>;
     createdAt: Doc<"messages">["_creationTime"];
     updatedAt: Doc<"messages">["updatedAt"];
     isEditing: boolean;
