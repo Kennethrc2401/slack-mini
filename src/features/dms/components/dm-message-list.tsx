@@ -12,7 +12,7 @@ interface DMMessage {
         _id: string;
     } | null;
     senderUser?: {
-        name: string;
+        name?: string;
         image?: string;
     } | null;
 }
