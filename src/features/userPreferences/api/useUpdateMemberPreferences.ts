@@ -9,6 +9,9 @@ interface UseUpdateMemberPreferencesProps {
     workspaceId: Id<"workspaces">;
     memberId: Id<"members">;
     theme?: "light" | "dark" | "system" | "lgbtq" | "trans" | "lesbian" | "bi" | "gay" | "queer";
+    notificationsEnabled?: boolean;
+    soundEnabled?: boolean;
+    readReceipts?: boolean;
 }
 
 type ResponseType = null | { success: boolean };
