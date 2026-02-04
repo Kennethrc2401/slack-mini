@@ -109,7 +109,7 @@ type PopoverContentProps = React.HTMLAttributes<HTMLDivElement>
 const PopoverContent = React.forwardRef<HTMLDivElement, PopoverContentProps>(
   ({ className, children, ...props }, ref) => {
     const { open, setOpen, triggerRef } = usePopover()
-    const contentRef = React.useRef<HTMLDivElement>(null)
+    const contentRef = React.useRef<HTMLDivElement | null>(null)
 
     React.useEffect(() => {
       if (!open) return
