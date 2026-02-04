@@ -10,7 +10,12 @@ export const signUpWithPassword = mutation({
   },
   handler: async (ctx, args) => {
     try {
-      // Check if user already exists - scan all users
+      // Validate inputs
+      if (!args.email || !args.password || !args.name) {
+        throw new Error("Missing required fields");
+      }
+
+      // Check if user already exists
       const allUsers = await ctx.db.query("users").collect();
       const existingUser = allUsers.find(u => u.email === args.email);
 
@@ -18,18 +23,18 @@ export const signUpWithPassword = mutation({
         throw new Error("User already exists");
       }
 
-      // Create a new user
-      const userId = await ctx.db.insert("users", {
+      // Create a new user with only required fields
+      const userData: any = {
         email: args.email,
         name: args.name,
-        image: undefined,
-        emailVerificationTime: Date.now(),
-      });
+      };
+      
+      const userId = await ctx.db.insert("users", userData);
 
       return { userId, email: args.email, name: args.name };
     } catch (error) {
       console.error("Sign up error:", error);
-      throw error;
+      throw new Error(error instanceof Error ? error.message : "Sign up failed");
     }
   },
 });
