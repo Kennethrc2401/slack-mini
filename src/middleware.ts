@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from 'next-auth';
+import { getToken } from 'next-auth/jwt';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -9,11 +9,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check if user is authenticated
-  const session = await auth();
+  // Check if user has a valid session token
+  const token = await getToken({ req: request, secret: process.env.AUTH_SECRET });
 
-  // If not authenticated and trying to access protected routes, redirect to auth
-  if (!session && pathname === '/') {
+  // If not authenticated and trying to access root, redirect to auth
+  if (!token && pathname === '/') {
     return NextResponse.redirect(new URL('/auth', request.url));
   }
 
