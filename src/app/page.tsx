@@ -8,6 +8,8 @@ import { useCreateWorkspaceModal } from "@/features/workspaces/store/use-create-
 import { useRouter } from "next/navigation";
 import { Loader } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default function Home() {
   const router = useRouter();
   const { data: session, status } = useSession();

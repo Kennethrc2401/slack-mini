@@ -69,8 +69,9 @@ export const useAuthActions = () => {
 
     const signOut = useCallback(async () => {
         contextSignOut();
-        // Force clear session with callbackUrl
-        await nextAuthSignOut({ callbackUrl: "/auth" });
+        // Clear session without redirect, then manually redirect
+        await nextAuthSignOut({ redirect: false });
+        window.location.href = "/auth";
     }, [contextSignOut]);
 
     return {
