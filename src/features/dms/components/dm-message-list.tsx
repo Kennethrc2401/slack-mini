@@ -10,11 +10,11 @@ interface DMMessage {
     createdAt?: number;
     sender?: {
         _id: string;
-    };
+    } | null;
     senderUser?: {
         name: string;
         image?: string;
-    };
+    } | null;
 }
 
 interface DMMessageListProps {
