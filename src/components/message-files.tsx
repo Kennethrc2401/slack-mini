@@ -2,10 +2,11 @@
 
 import { Download, File, FileText, Image, FileJson, FileCode, Music, Video } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Id } from "../../convex/_generated/dataModel";
 
 interface MessageFile {
-    id: string;
-    url: string;
+    id: Id<"_storage">;
+    url: string | null;
 }
 
 interface MessageFilesProps {
