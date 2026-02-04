@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 
-import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
+// import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import { ConvexClientProvider } from "@/components/convex-client-provider";
+import { AuthProvider } from "@/features/auth/auth-context";
 
 import { Modals } from "@/components/modals";
 import { Toaster } from "@/components/ui/sonner";
@@ -32,20 +33,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ConvexAuthNextjsServerProvider>
+    // <ConvexAuthNextjsServerProvider>
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ConvexClientProvider>
-          <JotaiProvider>
-            <Toaster />
-            <Modals />
-            <NuqsAdapter>{children}</NuqsAdapter>
-          </JotaiProvider>
+          <AuthProvider>
+            <JotaiProvider>
+              <Toaster />
+              <Modals />
+              <NuqsAdapter>{children}</NuqsAdapter>
+            </JotaiProvider>
+          </AuthProvider>
         </ConvexClientProvider>
       </body>
     </html>
-    </ConvexAuthNextjsServerProvider>
+    // </ConvexAuthNextjsServerProvider>
   );
 }

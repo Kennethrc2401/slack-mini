@@ -1,6 +1,7 @@
 import { useQuery } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
+import { useAuth } from "@/features/auth/hooks/use-auth";
 
 interface UseGetWorkspaceInfoProps {
     id: Id<"workspaces">; // Make id required
@@ -11,7 +12,13 @@ export const useGetWorkspaceInfo = ({ id }: UseGetWorkspaceInfoProps) => {
         throw new Error("id is required");
     }
     
-    const data = useQuery(api.workspaces.getInfoById, { id });
+    const { userId } = useAuth();
+    const data = useQuery(
+        api.workspaces.getInfoById,
+        (id && userId)
+            ? { id, userId: userId as Id<"users"> }
+            : "skip"
+    );
     
     const isLoading = data === undefined;
 

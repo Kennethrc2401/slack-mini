@@ -1,132 +1,259 @@
 "use client";
 
-import React, { useState } from 'react';
-import { Id } from '../../../../../convex/_generated/dataModel';
-// import { Form } from '@/components/ui/form';
+import React, { useState, useMemo } from "react";
+import { Loader, Search, Plus } from "lucide-react";
+import { Id } from "../../../../../convex/_generated/dataModel";
 
-import { useGetDMs } from '@/features/dms/api/use-get-dms';
-import { useCurrentMember } from '@/features/members/api/use-current-member';
-import { useWorkspaceId } from '@/hooks/use-workspace-id';
-import { useCreateDM } from '@/features/dms/api/use-create-dms';
-import { useGetMember } from '@/features/members/api/use-get-member';
-import { useGetMembers } from '@/features/members/api/use-get-members';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader } from 'lucide-react';
+import { useWorkspaceId } from "@/hooks/use-workspace-id";
+import { useCurrentMember } from "@/features/members/api/use-current-member";
+import { useGetConversations, useGetMessages } from "@/features/dms/api/use-get-dms";
+import { useCreateDM } from "@/features/dms/api/use-create-dms";
+import { useGetMembers } from "@/features/members/api/use-get-members";
 
-const DMsLandingPage = () => {
+import { DMConversationItem } from "@/features/dms/components/dm-conversation-item";
+import { DMHeader } from "@/features/dms/components/dm-header";
+import { DMMessageList } from "@/features/dms/components/dm-message-list";
+import { DMMessageInput } from "@/features/dms/components/dm-message-input";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+const DMsPage = () => {
     const workspaceId = useWorkspaceId();
-    const members = useGetMembers({ workspaceId });
-    const { data: currentMember, isLoading: isLoadingMember } = useCurrentMember({ workspaceId });
+    const [selectedMemberId, setSelectedMemberId] = useState<Id<"members"> | null>(null);
+    const [searchQuery, setSearchQuery] = useState("");
 
-    const [selectedMember, setSelectedMember] = useState<Id<"members"> | null>(null);
-    const { data: dms, isLoading } = useGetDMs({
-        workspaceId,
-        memberId: selectedMember || (currentMember?._id as Id<"members">),
+    const { data: currentMember, isLoading: isLoadingMember } = useCurrentMember({
+        workspaceId: workspaceId as Id<"workspaces">,
     });
 
-    const { handleCreateDM } = useCreateDM();
-    const [newDMBody, setNewDMBody] = useState<string>("");
+    const { data: conversations, isLoading: isLoadingConversations } = useGetConversations({
+        workspaceId: workspaceId as Id<"workspaces">,
+    });
 
-    const handleCreateNewDM = async () => {
+    const { data: messages, isLoading: isLoadingMessages } = useGetMessages({
+        workspaceId: workspaceId as Id<"workspaces">,
+        memberId: selectedMemberId || (currentMember?._id as Id<"members">),
+    });
+
+    const { data: allMembers } = useGetMembers({ workspaceId: workspaceId as Id<"workspaces"> });
+    const { handleCreateDM } = useCreateDM();
+
+    const selectedConversation = useMemo(() => {
+        if (!selectedMemberId || !conversations) return null;
+        return conversations.find((conv) => conv.memberId === selectedMemberId);
+    }, [selectedMemberId, conversations]);
+
+    const filteredConversations = useMemo(() => {
+        if (!conversations) return [];
+        return conversations.filter((conv) =>
+            conv.user?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [conversations, searchQuery]);
+
+    const handleSendMessage = async (text: string) => {
+        if (!selectedMemberId || !currentMember) return;
         try {
-            await handleCreateDM({ workspaceId, memberId: currentMember?._id as Id<"members">, body: newDMBody });
-            setNewDMBody("");
+            await handleCreateDM({
+                workspaceId: workspaceId as Id<"workspaces">,
+                memberId: selectedMemberId,
+                body: text,
+            });
         } catch (error) {
-            console.error("Error creating DM:", error);
+            console.error("Error sending message:", error);
         }
     };
 
-    const { data: memberData, isLoading: isLoadingMemberData } = useGetMember({ id: currentMember?._id as Id<"members"> });
+    const handleStartNewDM = async (memberId: Id<"members">) => {
+        setSelectedMemberId(memberId);
+    };
 
-    if (isLoadingMember) return <div className="text-center">Loading current member...</div>;
-    if (!currentMember) return <div className="text-center">No member found.</div>;
-
-    if (isLoading || isLoadingMemberData) {
+    if (isLoadingMember) {
         return (
-            <div
-                className="flex items-center justify-center w-full h-full"
-            >
-                <Loader className="w-8 h-8 text-blue-500" />
+            <div className="h-full flex items-center justify-center">
+                <Loader className="w-8 h-8 animate-spin text-muted-foreground" />
             </div>
-        )
+        );
+    }
+
+    if (!currentMember) {
+        return (
+            <div className="h-full flex items-center justify-center">
+                <p className="text-muted-foreground">Unable to load member information</p>
+            </div>
+        );
     }
 
     return (
-        <div className="max-w-2xl mx-auto p-6 bg-gray-50 rounded-lg shadow-md">
-            <h1 className="text-2xl font-bold text-center text-gray-800 mb-4">Your Direct Messages</h1>
-            <div className="bg-white p-4 rounded-lg shadow hover:bg-gray-100 transition duration-200">
-                <DropdownMenu>
-                    <DropdownMenuTrigger>
-                        <button className="bg-blue-500 text-white p-2 rounded">Select User</button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                        <DropdownMenuItem onClick={() => setSelectedMember(null)}>
-                            Show All DMs
-                        </DropdownMenuItem>
-                        {members?.data?.map((member) => (
-                            <DropdownMenuItem key={member._id} onClick={() => setSelectedMember(member._id)}>
-                                <div className="flex items-center justify-between w-full p-2 hover:bg-gray-100 transition duration-200">
-                                    <Avatar>
-                                        {member.user.image ? (
-                                            <AvatarImage
-                                                src={member.user.image}
-                                                alt={member.user.name}
-                                                className="w-8 h-8 rounded-full"
-                                            />
-                                        ) : (
-                                            <AvatarFallback className="w-8 h-8 rounded-full bg-blue-500 text-white">
-                                                {member.user.name?.charAt(0).toUpperCase()}
-                                            </AvatarFallback>
-                                        )}
-                                    </Avatar>
-                                    <div className="ml-2 flex flex-col justify-center w-full">
-                                        <p className="text-sm font-semibold">{member.user.name}</p>
-                                    </div>
+        <div className="h-full flex">
+            {/* Conversations Sidebar */}
+            <div className="w-64 border-r border-slate-200 dark:border-slate-700 flex flex-col bg-white dark:bg-slate-950">
+                {/* Header */}
+                <div className="p-4 border-b border-slate-200 dark:border-slate-700">
+                    <h1 className="font-bold text-xl mb-4">Direct Messages</h1>
+                    <div className="flex gap-2">
+                        <div className="flex-1 relative">
+                            <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search conversations..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="pl-8 h-9"
+                            />
+                        </div>
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button size="icon" variant="outline" className="h-9 w-9">
+                                    <Plus className="h-4 w-4" />
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[400px]">
+                                <DialogHeader>
+                                    <DialogTitle>Start a new conversation</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-3">
+                                    {allMembers?.data
+                                        ?.filter((m) => m._id !== currentMember._id)
+                                        .map((member) => (
+                                            <button
+                                                key={member._id}
+                                                onClick={() => {
+                                                    handleStartNewDM(member._id);
+                                                }}
+                                                className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                            >
+                                                <Avatar className="h-10 w-10">
+                                                    <AvatarImage
+                                                        src={member.user?.image || undefined}
+                                                        alt={member.user?.name}
+                                                    />
+                                                    <AvatarFallback className="bg-blue-500 text-white">
+                                                        {member.user?.name?.charAt(0).toUpperCase()}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <div className="text-left">
+                                                    <p className="font-medium text-sm">
+                                                        {member.user?.name}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {member.role}
+                                                    </p>
+                                                </div>
+                                            </button>
+                                        ))}
                                 </div>
-                            </DropdownMenuItem>
-                        ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
+                </div>
+
+                {/* Conversations List */}
+                <ScrollArea className="flex-1">
+                    <div className="p-2 space-y-1">
+                        {isLoadingConversations ? (
+                            <div className="flex justify-center p-4">
+                                <Loader className="w-5 h-5 animate-spin text-muted-foreground" />
+                            </div>
+                        ) : filteredConversations && filteredConversations.length > 0 ? (
+                            filteredConversations.map((conversation) => (
+                                <DMConversationItem
+                                    key={conversation.memberId}
+                                    name={conversation.user?.name || "Unknown"}
+                                    image={conversation.user?.image}
+                                    lastMessage={conversation.latestMessage?.body || "No messages"}
+                                    isSelected={selectedMemberId === conversation.memberId}
+                                    onClick={() => setSelectedMemberId(conversation.memberId as Id<"members">)}
+                                />
+                            ))
+                        ) : (
+                            <div className="p-4 text-center">
+                                <p className="text-sm text-muted-foreground">No conversations yet</p>
+                            </div>
+                        )}
+                    </div>
+                </ScrollArea>
             </div>
-            <ul className="space-y-4">
-                {dms?.map((dm) => (
-                    <li key={dm._id} className="bg-white p-4 rounded-lg shadow hover:bg-gray-100 transition duration-200">
-                        <div className="text-gray-700">
-                            <p>{dm.body}</p>
-                        </div>
-                        <div className="mt-2 text-sm text-gray-500">
-                            <span className="font-semibold">
-                                From: {memberData?.user?._id === currentMember.userId ? "You" : memberData?.user.name}
-                            </span>
-                        </div>
-                    </li>
-                ))}
-            </ul>
-            <div className="mt-6">
-                {/* <Form> */}
-                    <form
-                        className="space-y-4"
-                        onSubmit={(e) => {
-                            e.preventDefault();
-                            handleCreateNewDM();
-                        }}
-                    >
-                    <input
-                        type="text"
-                        value={newDMBody}
-                        onChange={(e) => setNewDMBody(e.target.value)}
-                        placeholder="Type your message here..."
-                        className="w-full p-2 border border-gray-300 rounded mt-2"
+
+            {/* Chat Area */}
+            {selectedConversation ? (
+                <div className="flex-1 flex flex-col">
+                    <DMHeader
+                        name={selectedConversation.user?.name || "Unknown"}
+                        image={selectedConversation.user?.image}
                     />
-                    <button type="button" onClick={handleCreateNewDM} className="mt-4 w-full bg-blue-500 text-white p-2 rounded">
-                        Send
-                    </button>
-                    </form>
-                {/* </Form> */}
-            </div>
+                    <DMMessageList
+                        messages={messages}
+                        currentUserId={currentMember?._id}
+                        isLoading={isLoadingMessages}
+                    />
+                    <DMMessageInput
+                        onSendMessage={handleSendMessage}
+                        isLoading={isLoadingMessages}
+                    />
+                </div>
+            ) : (
+                <div className="flex-1 flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+                    <div className="text-center">
+                        <p className="text-muted-foreground mb-4">
+                            Select a conversation or start a new one
+                        </p>
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button>
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    New Message
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[400px]">
+                                <DialogHeader>
+                                    <DialogTitle>Start a new conversation</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-3">
+                                    {allMembers?.data
+                                        ?.filter((m) => m._id !== currentMember._id)
+                                        .map((member) => (
+                                            <button
+                                                key={member._id}
+                                                onClick={() => {
+                                                    handleStartNewDM(member._id);
+                                                }}
+                                                className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                            >
+                                                <Avatar className="h-10 w-10">
+                                                    <AvatarImage
+                                                        src={member.user?.image || undefined}
+                                                        alt={member.user?.name}
+                                                    />
+                                                    <AvatarFallback className="bg-blue-500 text-white">
+                                                        {member.user?.name?.charAt(0).toUpperCase()}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <div className="text-left">
+                                                    <p className="font-medium text-sm">
+                                                        {member.user?.name}
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {member.role}
+                                                    </p>
+                                                </div>
+                                            </button>
+                                        ))}
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
 
-export default DMsLandingPage;
+export default DMsPage;

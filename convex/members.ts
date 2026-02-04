@@ -1,6 +1,5 @@
 import { v } from "convex/values"
 import { mutation, query, QueryCtx } from "./_generated/server";
-import { auth } from "./auth";
 import { Id } from "./_generated/dataModel";
 
 
@@ -11,13 +10,10 @@ const populateUser = (ctx: QueryCtx, id: Id<"users">) => {
 export const getById = query({
     args: {
         id: v.id("members"),
+        userId: v.id("users"),
     },
     handler: async (ctx, args) => {
-        const userId =  await auth.getUserId(ctx);
-
-        if (!userId) {
-            return null;
-        }
+        const userId = args.userId;
         
         const member = await ctx.db.get(args.id);
 
@@ -29,7 +25,7 @@ export const getById = query({
             .query("members")
             .withIndex("by_workspace_id_user_id", (q) => 
                 q.eq("workspaceId", member.workspaceId)
-                .eq("userId", userId)
+                .eq("userId", userId as Id<"users">)
             );
 
         if (!existingMember) {
@@ -52,18 +48,15 @@ export const getById = query({
 export const get = query({
     args: { 
         workspaceId: v.id("workspaces"),
+        userId: v.id("users"),
     },
     handler: async (ctx, args) => {
-        const userId =  await auth.getUserId(ctx);
-
-        if (!userId) {
-            return [];
-        }
+        const userId = args.userId;
 
         const member = await ctx.db
             .query("members")
             .withIndex("by_workspace_id_user_id", (q) => 
-                q.eq("workspaceId", args.workspaceId).eq("userId", userId)
+                q.eq("workspaceId", args.workspaceId).eq("userId", userId as Id<"users">)
             )
             .unique();
 
@@ -96,18 +89,17 @@ export const get = query({
 export const current = query({
     args: { 
         workspaceId: v.id("workspaces"),
+        userId: v.id("users"),
     },
     handler: async (ctx, args) => {
-        const userId =  await auth.getUserId(ctx);
-
-        if (!userId) {
+        if (!args.userId) {
             return null;
         }
 
         const member = await ctx.db
             .query("members")
             .withIndex("by_workspace_id_user_id", (q) => 
-                q.eq("workspaceId", args.workspaceId).eq("userId", userId)
+                q.eq("workspaceId", args.workspaceId).eq("userId", args.userId)
             )
             .unique();
 
@@ -123,13 +115,10 @@ export const update = mutation({
     args: {
         id: v.id("members"),
         role: v.union(v.literal("admin"), v.literal("member")),
+        userId: v.id("users"),
     },
     handler: async (ctx, args) => {
-        const userId =  await auth.getUserId(ctx);
-
-        if (!userId) {
-            return null;
-        }
+        const userId = args.userId;
 
         const member = await ctx.db.get(args.id);
 
@@ -141,7 +130,7 @@ export const update = mutation({
             .query("members")
             .withIndex("by_workspace_id_user_id", (q) => 
                 q.eq("workspaceId", member.workspaceId)
-                .eq("userId", userId)
+                .eq("userId", userId as Id<"users">)
             )
             .unique();
 
@@ -160,13 +149,10 @@ export const update = mutation({
 export const remove = mutation({
     args: {
         id: v.id("members"),
+        userId: v.id("users"),
     },
     handler: async (ctx, args) => {
-        const userId =  await auth.getUserId(ctx);
-
-        if (!userId) {
-            return null;
-        }
+        const userId = args.userId;
 
         const member = await ctx.db.get(args.id);
 
@@ -178,7 +164,7 @@ export const remove = mutation({
             .query("members")
             .withIndex("by_workspace_id_user_id", (q) => 
                 q.eq("workspaceId", member.workspaceId)
-                .eq("userId", userId)
+                .eq("userId", userId as Id<"users">)
             )
             .unique();
 

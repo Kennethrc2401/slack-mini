@@ -1,6 +1,7 @@
 "use client";
 
 import { useCreateOrGetConversation } from "@/features/conversations/api/use-create-or-get-conversation";
+import { useAuth } from "@/features/auth/hooks/use-auth";
 import { useMemberId } from "@/hooks/use-member-id";
 import { useWorkspaceId } from "@/hooks/use-workspace-id";
 import { AlertTriangle, Loader } from "lucide-react";
@@ -12,6 +13,7 @@ import { Conversation } from "./conversation";
 const MemberIdPage = () => {
     const workspaceId = useWorkspaceId();
     const memberId = useMemberId();
+    const { userId } = useAuth();
     const [conversationId, setConversationId] = useState<Id<"conversations"> | null>(null);
 
     // Use ref to keep track of mutation completion and prevent refetching
@@ -20,12 +22,13 @@ const MemberIdPage = () => {
     const { mutate, isPending } = useCreateOrGetConversation();
 
     useEffect(() => {
-        if (!workspaceId || !memberId || isMutationCompleted.current) {
+        if (!workspaceId || !memberId || !userId || isMutationCompleted.current) {
             // Skip if workspaceId, memberId are not ready or if mutation is already completed
             return;
         }
 
-        // Trigger mutation and mark as completed
+        // Trigger mutation and mark as completed to avoid refetch loops
+        isMutationCompleted.current = true;
         mutate(
             {
                 workspaceId,
@@ -35,7 +38,6 @@ const MemberIdPage = () => {
                 onSuccess: (response) => {
                     if (response) {
                         setConversationId(response);
-                        isMutationCompleted.current = true; // Prevent re-fetching
                     }
                 },
                 onError: (error) => {

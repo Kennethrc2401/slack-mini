@@ -1,8 +1,9 @@
 import { useMutation } from "convex/react";
 import { useCallback, useMemo, useState } from "react";
 
-import { api } from "../../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
+import { useAuth } from "@/features/auth/hooks/use-auth";
 
 // Define the request type for removing a workspace
 type RequestType = { 
@@ -34,6 +35,7 @@ export const useRemoveWorkspace = () => {
 
     // Use the mutation for creating a workspace
     const mutation = useMutation(api.workspaces.remove);
+    const { userId } = useAuth();
 
     const mutate = useCallback(async (values: RequestType, options?: Options) => {
         try {
@@ -42,8 +44,15 @@ export const useRemoveWorkspace = () => {
             setError(null);
             setStatus("pending");
 
+            if (!userId) {
+                throw new Error("User not authenticated");
+            }
+
             // Call the mutation and get the response
-            const response = await mutation(values);
+            const response = await mutation({
+                ...values,
+                userId: userId as Id<"users">,
+            });
 
             // Assuming response is a string
             const workspaceId = response || null;
@@ -77,3 +86,4 @@ export const useRemoveWorkspace = () => {
         isSettled,
     };
 };
+

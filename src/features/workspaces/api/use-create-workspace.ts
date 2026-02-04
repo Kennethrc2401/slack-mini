@@ -1,11 +1,11 @@
 import { useMutation } from "convex/react";
 import { useCallback, useMemo, useState } from "react";
 
-import { api } from "../../../../convex/_generated/api";
-import { Id } from "../../../../convex/_generated/dataModel";
+import { api } from "@convex/_generated/api";
+import { Id } from "@convex/_generated/dataModel";
 
 // Define the request type for creating a workspace
-type RequestType = { name: string };
+type RequestType = { name: string; userId: Id<"users"> };
 
 // Define the response type to include the workspace ID
 type ResponseType = Id<"workspaces"> | null;

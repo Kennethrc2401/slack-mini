@@ -1,4 +1,6 @@
-import { BellIcon, CalendarDays, FileStackIcon, Hash, Headphones, Home, Layers, LucidePlay, MessagesSquare, MoreHorizontal, UsersRoundIcon } from "lucide-react";
+"use client";
+
+import { BellIcon, CalendarDays, FileStackIcon, Hash, Headphones, Home, Layers, LucidePlay, MessagesSquare, MoreHorizontal, PlugZap, UsersRoundIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { SidebarButton } from "./sidebar-button";
@@ -8,7 +10,6 @@ import { useWorkspaceId } from "@/hooks/use-workspace-id";
 import { useCurrentMember } from "@/features/members/api/use-current-member";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
-import { FcOrganization } from "react-icons/fc";
 import { FaTasks } from "react-icons/fa";
 
 
@@ -55,7 +56,7 @@ export const Sidebar = () => {
                 onClick={() => router.push(`/workspace/${workspaceId}/todos`)}
             />
             <DropdownMenu>
-                <DropdownMenuTrigger>
+                <DropdownMenuTrigger asChild>
                     <SidebarButton 
                         icon={MoreHorizontal}
                         label="More"
@@ -66,33 +67,54 @@ export const Sidebar = () => {
                     side="right"
                     className="w-60"
                 >
-                    <DropdownMenuItem className="h-10 bg-[#F5F5F5] text-[#5C3B58]">
+                    <DropdownMenuItem
+                        className="h-10 bg-[#F5F5F5] text-[#5C3B58]"
+                        onClick={() => router.push(`/workspace/${workspaceId}/automations`)}
+                    >
                         <LucidePlay className="size-4 mr-2 text-[#5C3B58]" />
                         Automations
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="h-10 bg-[#F5F5F5] text-[#5C3B58]">
+                    <DropdownMenuItem 
+                        className="h-10 bg-[#F5F5F5] text-[#5C3B58]"
+                        onClick={() => router.push(`/workspace/${workspaceId}/huddles`)}
+                    >
                         <Headphones className="size-4 mr-2 text-[#5C3B58]" />
                         Huddles
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="h-10">
+                    <DropdownMenuItem 
+                        className="h-10"
+                        onClick={() => router.push(`/workspace/${workspaceId}/canvases`)}
+                    >
                         <FileStackIcon className="size-4 mr-2 text-[#5C3B58]" />
                         Canvases
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="h-10 bg-[#F5F5F5] text-[#5C3B58]">
+                    <DropdownMenuItem 
+                        className="h-10 bg-[#F5F5F5] text-[#5C3B58]"
+                        onClick={() => router.push(`/workspace/${workspaceId}/files`)}
+                    >
                         <Layers className="size-4 mr-2 text-[#5C3B58]" />
                         Files
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="h-10 bg-[#F5F5F5] text-[#5C3B58]">
+                    <DropdownMenuItem 
+                        className="h-10 bg-[#F5F5F5] text-[#5C3B58]"
+                        onClick={() => router.push(`/workspace/${workspaceId}/channels`)}
+                    >
                         <Hash className="size-4 mr-2 text-[#5C3B58]" />
                         Channels
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="h-10 bg-[#F5F5F5] text-[#5C3B58]">
+                    <DropdownMenuItem 
+                        className="h-10 bg-[#F5F5F5] text-[#5C3B58]"
+                        onClick={() => router.push(`/workspace/${workspaceId}/people`)}
+                    >
                         <UsersRoundIcon className="size-4 mr-2 text-[#5C3B58]" />
                         People
                     </DropdownMenuItem>
                     <Separator />
-                    <DropdownMenuItem className="h-10 bg-[#F5F5F5] text-[#5C3B58]">
-                        <FcOrganization className="size-4 mr-2 text-[#5C3B58]" />
+                    <DropdownMenuItem 
+                        className="h-10 bg-[#F5F5F5] text-[#5C3B58]"
+                        onClick={() => router.push(`/workspace/${workspaceId}/external-connections`)}
+                    >
+                        <PlugZap className="size-4 mr-2 text-[#5C3B58]" />
                         External Connections
                     </DropdownMenuItem>
                 </DropdownMenuContent>

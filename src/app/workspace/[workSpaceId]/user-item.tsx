@@ -8,12 +8,12 @@ import { cn } from "@/lib/utils";
 import { useWorkspaceId } from "@/hooks/use-workspace-id";
 
 const userItemVariants = cva(
-    "flex items-center gap-1.5 justify-start font-normal h-7 px-4 text-sm overflow-hidden",
+    "flex items-center gap-2.5 justify-start font-normal h-8 px-3 py-2 text-sm overflow-hidden rounded transition-colors",
     {
         variants: {
             variant: {
-                default: "text-[#f9edffcc]",
-                active: "text-[#481349] bg-white/90 hover:bg-white/90",
+                default: "text-[#f9edffcc] hover:bg-white/10",
+                active: "text-white bg-white/20 hover:bg-white/25",
             }
         },
         defaultVariants: {
@@ -39,23 +39,22 @@ export const UserItem = ({
     const avatarFallback = label.charAt(0).toUpperCase();
 
     return (
-        <Button
-            variant={"transparent"}
-            className={cn(userItemVariants({ variant: variant }))}
-            size={"sm"}
-            asChild
-        >
-            <Link href={`/workspace/${workspaceId}/member/${id}`}>
-                <Avatar className="size-5 rounded-md mr-1">
+        <Link href={`/workspace/${workspaceId}/member/${id}`}>
+            <Button
+                variant={"transparent"}
+                className={cn(userItemVariants({ variant: variant }))}
+                size={"sm"}
+            >
+                <Avatar className="size-6 rounded-md shrink-0">
                     <AvatarImage className="rounded-md" src={image} />
-                    <AvatarFallback className="rounded-md bg-sky-500 text-white text-xs">
+                    <AvatarFallback className="rounded-md bg-sky-500 text-white text-xs font-semibold">
                         {avatarFallback}
                     </AvatarFallback>
                 </Avatar>
-                <span className="text-sm truncate">
+                <span className="text-sm font-medium truncate flex-1">
                     {label}
                 </span>
-            </Link>
-        </Button>
+            </Button>
+        </Link>
     )
 };

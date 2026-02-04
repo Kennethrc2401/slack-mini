@@ -1,8 +1,9 @@
 import { useMutation } from "convex/react";
 import { useCallback, useMemo, useState } from "react";
 
-import { api } from "../../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
+import { useAuth } from "@/features/auth/hooks/use-auth";
 
 type RequestType = {
     id: Id<"messages">;
@@ -28,6 +29,7 @@ export const useRemoveMessage = () => {
     const isSettled = useMemo(() => status === "settled", [status]);
 
     const mutation = useMutation(api.messages.remove);
+    const { userId } = useAuth();
 
     const mutate = useCallback(async (values: RequestType, options?: Options) => {
         try {
@@ -35,7 +37,14 @@ export const useRemoveMessage = () => {
             setError(null);
             setStatus("pending");
 
-            const response = await mutation(values);
+            if (!userId) {
+                throw new Error("User not authenticated");
+            }
+
+            const response = await mutation({
+                ...values,
+                userId: userId as Id<"users">,
+            });
 
             return response;
         } catch (error) {

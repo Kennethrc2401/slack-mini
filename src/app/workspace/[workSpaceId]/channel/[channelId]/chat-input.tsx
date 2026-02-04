@@ -7,6 +7,7 @@ import Quill from "quill";
 import { toast } from "sonner";
 import { useGenerateUploadUrl } from "@/features/upload/api/use-generate-upload-url";
 import { Id } from "../../../../../../convex/_generated/dataModel";
+import { playSentSound } from "@/lib/sounds";
 
 const Editor = dynamic(() => import("@/components/editor"), { ssr: false });
 
@@ -81,6 +82,7 @@ export const ChatInput = ({ placeholder }: ChatInputProps) => {
                 throwError: true,
             });
 
+            playSentSound();
             setEditorKey((prevKey) => prevKey + 1);
         } catch (error) {
             toast.error(`Failed to send message: ${error}`);

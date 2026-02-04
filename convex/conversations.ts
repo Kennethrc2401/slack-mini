@@ -1,24 +1,21 @@
 import { v } from "convex/values"; 
 import { mutation } from "./_generated/server";
-import { auth } from "./auth";
+import { Id } from "./_generated/dataModel";
 
 export const createOrGet = mutation({
     args: {
         memberId: v.id("members"),
         workspaceId: v.id("workspaces"),
+        userId: v.id("users"),
     },
     handler: async (ctx, args) => {
-        const userId = await auth.getUserId(ctx);
-
-        if (!userId) {
-            throw new Error("Unauthorized");
-        }
+        const userId = args.userId;
 
         // Ensure that currentMember retrieves the actual member object
         const currentMember = await ctx.db
             .query("members")
             .withIndex("by_workspace_id_user_id", (q) => 
-                q.eq("workspaceId", args.workspaceId).eq("userId", userId)
+                q.eq("workspaceId", args.workspaceId).eq("userId", userId as Id<"users">),
             )
             .unique(); // Use .unique() to get a single member
 

@@ -1,22 +1,98 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { auth } from "./auth";
+import { Id } from "./_generated/dataModel";
 
-// Query to get DMs between two members
-export const getDMs = query({
+// Query to get all DM conversations for the current user
+export const getConversations = query({
     args: {
         workspaceId: v.id("workspaces"),
-        memberId: v.id("members"),
+        userId: v.id("users"),
     },
     handler: async (ctx, args) => {
-        const userId = await auth.getUserId(ctx);
-        if (!userId) {
-            throw new Error("Unauthorized");
-        }
+        const userId = args.userId;
 
         const currentMember = await ctx.db
             .query("members")
-            .withIndex("by_user_id", (q) => q.eq("userId", userId))
+            .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">),)
+            .first();
+
+        if (!currentMember) {
+            throw new Error("Current member not found.");
+        }
+
+        // Get all DMs where the current member is involved
+        const conversations = await ctx.db
+            .query("dms")
+            .filter((q) =>
+                q.and(
+                    q.eq(q.field("workspaceId"), args.workspaceId),
+                    q.or(
+                        q.eq(q.field("memberOneId"), currentMember._id),
+                        q.eq(q.field("memberTwoId"), currentMember._id)
+                    )
+                )
+            )
+            .collect();
+
+        // Group by conversation partner and get the latest message
+        const conversationMap = new Map<string, { latestMessage: any; messages: any[] }>();
+
+        for (const dm of conversations) {
+            const partnerId = dm.memberOneId === currentMember._id ? dm.memberTwoId : dm.memberOneId;
+            const partnerIdString = partnerId.toString();
+
+            if (!conversationMap.has(partnerIdString)) {
+                conversationMap.set(partnerIdString, { latestMessage: dm, messages: [dm] });
+            } else {
+                const conversation = conversationMap.get(partnerIdString)!;
+                conversation.messages.push(dm);
+                // Update latest message if this one is newer
+                if ((dm.createdAt || 0) > (conversation.latestMessage.createdAt || 0)) {
+                    conversation.latestMessage = dm;
+                }
+            }
+        }
+
+        // Convert to array and enrich with member info
+        const enrichedConversations = [];
+        for (const [partnerId, { latestMessage, messages }] of conversationMap.entries()) {
+            const partnerMember = await ctx.db.get(partnerId as Id<"members">);
+            if (partnerMember && "userId" in partnerMember) {
+                const partnerUser = await ctx.db.get(partnerMember.userId as Id<"users">);
+                enrichedConversations.push({
+                    memberId: partnerId,
+                    member: partnerMember,
+                    user: partnerUser,
+                    latestMessage,
+                    messageCount: messages.length,
+                });
+            }
+        }
+
+        // Sort by latest message
+        enrichedConversations.sort((a, b) => {
+            const aTime = a.latestMessage.createdAt || 0;
+            const bTime = b.latestMessage.createdAt || 0;
+            return bTime - aTime;
+        });
+
+        return enrichedConversations;
+    },
+});
+
+// Query to get DM messages between two members
+export const getMessages = query({
+    args: {
+        workspaceId: v.id("workspaces"),
+        memberId: v.id("members"),
+        userId: v.id("users"),
+    },
+    handler: async (ctx, args) => {
+        const userId = args.userId;
+
+        const currentMember = await ctx.db
+            .query("members")
+            .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">),)
             .first();
 
         if (!currentMember) {
@@ -29,29 +105,41 @@ export const getDMs = query({
         }
 
         // Fetch all DMs that match the workspace ID and current/other member IDs
-        const dms = await ctx.db
+        const messages = await ctx.db
             .query("dms")
             .filter((q) =>
                 q.and(
-                    q.eq(q.field("workspaceId"), args.workspaceId), // Direct comparison with args.workspaceId
+                    q.eq(q.field("workspaceId"), args.workspaceId),
                     q.or(
                         q.and(
                             q.eq(q.field("memberOneId"), currentMember._id),
-                            q.eq(q.field("memberTwoId"), otherMember._id)
+                            q.eq(q.field("memberTwoId"), args.memberId)
                         ),
                         q.and(
-                            q.eq(q.field("memberOneId"), otherMember._id),
+                            q.eq(q.field("memberOneId"), args.memberId),
                             q.eq(q.field("memberTwoId"), currentMember._id)
                         )
                     )
                 )
             )
+            .order("asc")
             .collect();
 
-        return dms;
+        // Enrich with sender info
+        const enrichedMessages = [];
+        for (const msg of messages) {
+            const sender = await ctx.db.get(msg.memberOneId);
+            const senderUser = sender ? await ctx.db.get(sender.userId) : null;
+            enrichedMessages.push({
+                ...msg,
+                sender,
+                senderUser,
+            });
+        }
+
+        return enrichedMessages;
     },
 });
-
 
 // Mutation to create a new DM between two members
 export const createDM = mutation({
@@ -59,16 +147,14 @@ export const createDM = mutation({
         workspaceId: v.id("workspaces"),
         memberId: v.id("members"),
         body: v.string(),
+        userId: v.id("users"),
     },
     handler: async (ctx, args) => {
-        const userId = await auth.getUserId(ctx);
-        if (!userId) {
-            throw new Error("Unauthorized");
-        }
+        const userId = args.userId;
 
         const currentMember = await ctx.db
             .query("members")
-            .withIndex("by_user_id", (q) => q.eq("userId", userId))
+            .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
             .first();
 
         if (!currentMember) {
@@ -80,13 +166,17 @@ export const createDM = mutation({
             throw new Error("Other member not found.");
         }
 
+        if (!args.body.trim()) {
+            throw new Error("Message cannot be empty");
+        }
+
         try {
             const newDMId = await ctx.db.insert("dms", {
                 workspaceId: args.workspaceId,
                 memberOneId: currentMember._id,
                 memberTwoId: args.memberId,
                 body: args.body,
-                createdAt: Date.now(), // Ensure createdAt is set here
+                createdAt: Date.now(),
             });
 
             return newDMId;
@@ -104,12 +194,10 @@ export const updateDM = mutation({
     args: {
         dmId: v.id("dms"),
         body: v.string(),
+        userId: v.id("users"),
     },
     handler: async (ctx, args) => {
-        const userId = await auth.getUserId(ctx);
-        if (!userId) {
-            throw new Error("Unauthorized");
-        }
+        const userId = args.userId;
 
         const dm = await ctx.db.get(args.dmId);
         if (!dm) {
@@ -119,7 +207,7 @@ export const updateDM = mutation({
         // Only allow members of the DM to update it
         const currentMember = await ctx.db
             .query("members")
-            .withIndex("by_user_id", (q) => q.eq("userId", userId))
+            .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">),)
             .first();
 
         if (
@@ -141,12 +229,10 @@ export const updateDM = mutation({
 export const deleteDM = mutation({
     args: {
         dmId: v.id("dms"),
+        userId: v.id("users"),
     },
     handler: async (ctx, args) => {
-        const userId = await auth.getUserId(ctx);
-        if (!userId) {
-            throw new Error("Unauthorized");
-        }
+        const userId = args.userId;
 
         const dm = await ctx.db.get(args.dmId);
         if (!dm) {
@@ -155,7 +241,7 @@ export const deleteDM = mutation({
 
         const currentMember = await ctx.db
             .query("members")
-            .withIndex("by_user_id", (q) => q.eq("userId", userId))
+            .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
             .first();
 
         if (

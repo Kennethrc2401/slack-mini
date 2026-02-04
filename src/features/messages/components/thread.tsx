@@ -7,6 +7,7 @@ import { Message } from "@/components/message";
 import { AlertTriangle, Loader, XIcon } from "lucide-react";
 import { Id } from "../../../../convex/_generated/dataModel";
 import { toast } from "sonner";
+import { playSentSound } from "@/lib/sounds";
 
 import { useWorkspaceId } from "@/hooks/use-workspace-id";
 import { useCurrentMember } from "@/features/members/api/use-current-member";
@@ -32,11 +33,15 @@ interface CreateMessageValues {
     workspaceId: Id<"workspaces">;
     parentMessageId: Id<"messages">;
     body: string;
-    image: Id<"_storage"> | undefined;
+    image?: Id<"_storage">;
+    files?: Id<"_storage">[];
 };
 
 const formatDateLabel = (dateStr: string) => {
-    const date = new Date(dateStr);
+    // Parse the date string in yyyy-MM-dd format without timezone conversion
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    
     if (isToday(date)) return "Today";
     if (isYesterday(date)) return "Yesterday";
     return format(date, "EEEE, MMMM d");
@@ -70,10 +75,12 @@ export const Thread = ({ messageId, onClose }: ThreadProps) => {
 
     const handleSubmit = async ({
         body,
-        image
+        image,
+        files = []
     } : {
         body: string;
         image: File | null;
+        files?: File[];
     }) => {
         try {
             setIsPending(true);
@@ -85,6 +92,7 @@ export const Thread = ({ messageId, onClose }: ThreadProps) => {
                 parentMessageId: messageId,
                 body,
                 image: undefined,
+                files: [],
             };
 
             if (image) {
@@ -111,12 +119,44 @@ export const Thread = ({ messageId, onClose }: ThreadProps) => {
                 values.image = storageId;
             }
 
+            // Upload files
+            if (files.length > 0) {
+                const uploadedFileIds: Id<"_storage">[] = [];
+
+                for (const file of files) {
+                    const url = await generateUploadUrl({}, { throwError: true });
+
+                    if (!url) {
+                        throw new Error("URL is missing");
+                    }
+
+                    const result = await fetch(url, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": file.type,
+                        },
+                        body: file,
+                    });
+
+                    if (!result.ok) {
+                        throw new Error("Failed to upload file");
+                    }
+
+                    const { storageId } = await result.json();
+                    uploadedFileIds.push(storageId);
+                }
+
+                values.files = uploadedFileIds;
+            }
+
             await createMessage(
                 values
             , {
                 throwError: true,
             });
 
+            playSentSound();
+            
             logActivity({
                 messageId,
                 workspaceId,

@@ -1,9 +1,9 @@
 "use client";
 
-import VerificationInput from "react-verification-input";
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { Loader } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -14,15 +14,19 @@ import { Id } from "../../../../convex/_generated/dataModel";
 import { useJoin } from "@/features/workspaces/api/use-join";
 import { useWorkspaceId } from "@/hooks/use-workspace-id";
 import { useGetWorkspaceInfo } from "@/features/workspaces/api/use-get-workspace-info";
+import { useAuth } from "@/features/auth/hooks/use-auth";
 
 const JoinPage = () => {
     const router = useRouter();
     const workspaceId = useWorkspaceId();
-    const { mutate, isPending } = useJoin();
+    const { mutate, isPending, error } = useJoin();
+    const { userId, isLoading: authLoading } = useAuth();
     const {data, isLoading } = useGetWorkspaceInfo({ 
         id: workspaceId as Id<"workspaces">,
     });
     const isMember = useMemo(() => data?.isMember, [data?.isMember]);
+    const [code, setCode] = useState("");
+    const [lastError, setLastError] = useState<string | null>(null);
 
     useEffect(() => {
         if (isMember) {
@@ -30,27 +34,41 @@ const JoinPage = () => {
         }
     }, [isMember, router, workspaceId]);
 
+    // Redirect to sign in if not authenticated
+    useEffect(() => {
+        if (!authLoading && !userId) {
+            router.push("/auth");
+        }
+    }, [userId, authLoading, router]);
+
     const handleComplete = (value: string) => {
         mutate({
             workspaceId: workspaceId as Id<"workspaces">,
             joinCode: value,
         }, {
             onSuccess: (id) => {
-                router.replace(`/workspaces/${id}`);
-                // router.replace(`/`);
+                router.replace(`/workspace/${id}`);
                 toast.success("Workspace joined successfully");
             },
-            onError: () => {
-                toast.error("Failed to join workspace. Please try again.");
+            onError: (err) => {
+                const errorMsg = err?.message || "Failed to join workspace. Please try again.";
+                setLastError(errorMsg);
+                toast.error(errorMsg);
             }
         });
     };
+
+    useEffect(() => {
+        if (code.length === 6 && !isPending) {
+            handleComplete(code);
+        }
+    }, [code, isPending]);
     
     if (!workspaceId) {
         return <div>Error: Workspace ID is missing.</div>;
     }
 
-    if (isLoading) {
+    if (isLoading || authLoading) {
         return (
             <div className="h-full flex items-center justify-center">
                 <Loader className="size-6 animate-spin text-muted-foreground" />
@@ -77,18 +95,38 @@ const JoinPage = () => {
                     Enter the workspace code to join
                 </p>
             </div>
-            <VerificationInput 
-                classNames={{
-                    container: cn("flex gap-x-2", isPending && "opacity-50 pointer-not-allowed"),
-                    character: "uppercase h-auto rounded-md border border-gray-300 flex items-center justify-center text-lg font-medium text-gray-500",
-                    characterInactive: "bg-muted",
-                    characterSelected: "bg-white text-black",
-                    characterFilled: "bg-white text-black",
-                }}
-                autoFocus
-                length={6}
-                onComplete={handleComplete}
-            />
+            <div className="w-full space-y-3">
+                {lastError && (
+                    <div className="rounded-md bg-red-50 p-3 text-sm text-red-900 border border-red-200">
+                        {lastError}
+                    </div>
+                )}
+                <Input
+                    value={code}
+                    onChange={(event) => {
+                        const next = event.target.value
+                            .replace(/\s+/g, "")
+                            .toUpperCase()
+                            .slice(0, 6);
+                        setCode(next);
+                        setLastError(null);
+                    }}
+                    placeholder="Enter 6-character code"
+                    className={cn(
+                        "uppercase tracking-[0.5em] text-center text-lg font-medium",
+                        isPending && "opacity-50 pointer-not-allowed"
+                    )}
+                    disabled={isPending}
+                    autoFocus
+                />
+                <Button
+                    className="w-full"
+                    disabled={isPending || code.length !== 6}
+                    onClick={() => handleComplete(code)}
+                >
+                    {isPending ? "Joining..." : "Join workspace"}
+                </Button>
+            </div>
         </div>
         <div className="flex gap-x-4">
             <Button

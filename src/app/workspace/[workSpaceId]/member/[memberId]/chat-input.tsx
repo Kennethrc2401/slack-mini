@@ -5,6 +5,7 @@ import Quill from "quill";
 import { toast } from "sonner";
 import { useGenerateUploadUrl } from "@/features/upload/api/use-generate-upload-url";
 import { Id } from "../../../../../../convex/_generated/dataModel";
+import { playSentSound } from "@/lib/sounds";
 
 import { useWorkspaceId } from "@/hooks/use-workspace-id";
 

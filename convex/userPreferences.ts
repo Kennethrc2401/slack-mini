@@ -42,7 +42,7 @@ export const getMemberPreferencesById = query({
             return null;
         }
 
-        const member = await getMember(ctx, args.workspaceId, userId);
+        const member = await getMember(ctx, args.workspaceId, userId as Id<"users">);
 
         if (!member) {
             return null;
@@ -68,16 +68,14 @@ export const updateMemberPreferencesById = mutation({
     args: {
         workspaceId: v.id("workspaces"),
         memberId: v.id("members"),
+        userId: v.id("users"),
         theme: v.optional(v.string()),
+        notificationsEnabled: v.optional(v.boolean()),
+        soundEnabled: v.optional(v.boolean()),
+        readReceipts: v.optional(v.boolean()),
     },
     handler: async (ctx, args) => {
-        const userId = await auth.getUserId(ctx);
-
-        if (!userId) {
-            throw new Error("Unauthorized");
-        }
-
-        const member = await getMember(ctx, args.workspaceId, userId);
+        const member = await getMember(ctx, args.workspaceId, args.userId);
 
         if (!member) {
             throw new Error("Unauthorized");
@@ -99,17 +97,26 @@ export const updateMemberPreferencesById = mutation({
                 workspaceId: args.workspaceId,
                 memberId: args.memberId,
                 theme: (args.theme as "light" | "dark" | "system" | "lgbtq" | "trans" | "lesbian" | "bi" | "gay" | "queer") || "light",
+                notificationsEnabled: args.notificationsEnabled ?? true,
+                soundEnabled: args.soundEnabled ?? true,
+                readReceipts: args.readReceipts ?? true,
             });
         } else {
-            await ctx.db.patch(
-                preferences._id,
-                {
-                    theme: (
-                        args.theme as "light" | "dark" | "system" | "lgbtq" | "lesbian" | "bi" | "gay" | "queer"
-                    ) || "light",
-                },
-                        
-            );
+            const updateData: any = {};
+            if (args.theme !== undefined) {
+                updateData.theme = args.theme as "light" | "dark" | "system" | "lgbtq" | "trans" | "lesbian" | "bi" | "gay" | "queer";
+            }
+            if (args.notificationsEnabled !== undefined) {
+                updateData.notificationsEnabled = args.notificationsEnabled;
+            }
+            if (args.soundEnabled !== undefined) {
+                updateData.soundEnabled = args.soundEnabled;
+            }
+            if (args.readReceipts !== undefined) {
+                updateData.readReceipts = args.readReceipts;
+            }
+            
+            await ctx.db.patch(preferences._id, updateData);
         }
 
         return true;

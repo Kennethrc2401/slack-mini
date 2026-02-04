@@ -1,19 +1,44 @@
-import GitHub from "@auth/core/providers/github";
-import Google from "@auth/core/providers/google";
-import { convexAuth } from "@convex-dev/auth/server";
-import { Password } from "@convex-dev/auth/providers/Password";
-import { DataModel } from "./_generated/dataModel";
+import { v } from "convex/values";
+import { QueryCtx, MutationCtx } from "./_generated/server";
+import { defineTable } from "convex/server";
+import { HttpRouter } from "convex/server";
 
+// Simple users table 
+export const userTables = {
+  users: defineTable({
+    email: v.string(),
+    name: v.optional(v.string()),
+    image: v.optional(v.string()),
+    emailVerificationTime: v.optional(v.number()),
+  }),
+};
 
-const CustomPassword = Password<DataModel>({
-  profile(params) {
-    return {
-      email: params.email as string,
-      name: params.name as string,
-    };
+// Get user ID from Convex identity or return a guest ID
+export const auth = {
+  async getUserId(ctx: QueryCtx | MutationCtx): Promise<string | null> {
+    // Try to get from Convex auth first
+    try {
+      const identity = await ctx.auth.getUserIdentity();
+      if (identity?.tokenIdentifier) {
+        return identity.tokenIdentifier;
+      }
+    } catch (e) {
+      // If Convex auth fails, continue to fallback
+    }
+    
+    // Return null - the client should pass the user email if needed
+    // The client will handle authentication via the users.upsert mutation
+    return null;
   },
-});
+  
+  addHttpRoutes(http: HttpRouter) {
+    return http;
+  },
+};
 
-export const { auth, signIn, signOut, store } = convexAuth({
-  providers: [CustomPassword, GitHub, Google],
-});
+// Placeholder exports for compatibility
+export const signIn = async () => {};
+export const signOut = async () => {};
+export const store = {};
+export const isAuthenticated = false;
+

@@ -157,7 +157,7 @@ export const Header = ({
             <LeaveDialog />
             <UpdateDialog />
             <DropdownMenu>
-                <DropdownMenuTrigger>
+                <DropdownMenuTrigger asChild>
                     <Button
                         variant={"ghost"}
                         className="text-lg font-semibold px-2 overflow-hidden w-auto"

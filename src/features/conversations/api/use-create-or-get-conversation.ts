@@ -1,8 +1,9 @@
 import { useMutation } from "convex/react";
 import { useCallback, useMemo, useState } from "react";
 
-import { api } from "../../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
+import { useAuth } from "@/features/auth/hooks/use-auth";
 
 type RequestType = {
     workspaceId: Id<"workspaces">;
@@ -30,6 +31,7 @@ export const useCreateOrGetConversation = () => {
 
     // Mutation setup
     const mutation = useMutation(api.conversations.createOrGet);
+    const { userId } = useAuth();
 
     // The mutate function
     const mutate = useCallback(async (values: RequestType, options?: Options) => {
@@ -39,7 +41,14 @@ export const useCreateOrGetConversation = () => {
             setStatus("pending");
             setError(null);
 
-            const response = await mutation(values);
+            if (!userId) {
+                throw new Error("User not authenticated");
+            }
+
+            const response = await mutation({
+                ...values,
+                userId: userId as Id<"users">,
+            });
 
             setData(response);
             setStatus("success");

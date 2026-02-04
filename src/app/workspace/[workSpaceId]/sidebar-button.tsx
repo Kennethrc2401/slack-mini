@@ -1,40 +1,44 @@
-import { Button } from "@/components/ui/button";
+import * as React from "react";
+import { Button, type ButtonProps } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { LucideIcon } from "lucide-react";
 import { IconType } from "react-icons/lib";
 
-interface SidebarButtonProps {
+interface SidebarButtonProps extends ButtonProps {
     icon: LucideIcon | IconType;
     label: string;
     isActive?: boolean;
-    onClick?: () => void;
 };
 
-export const SidebarButton = ({ 
-    icon: Icon, 
-    label, 
-    isActive,
-    onClick,
-}: SidebarButtonProps) => {
-
-    return (
-        <div className="flex flex-col items-center justify-center gap-y-0.5 cursor-pointer group">
+export const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps>(
+    ({
+        icon: Icon,
+        label,
+        isActive,
+        className,
+        ...props
+    }, ref) => {
+        return (
             <Button
-                asChild
-                onClick={onClick}
-                variant={"transparent"}
+                ref={ref}
+                type="button"
+                variant="transparent"
                 className={cn(
-                    "size-9 p-2 group-hover:bg-accent/20",
-                    isActive && "bg-accent/20"
+                    "h-14 w-14 p-2 flex flex-col items-center justify-center gap-y-1 group",
+                    isActive && "bg-accent/20",
+                    className
                 )}
+                {...props}
             >
-                <Icon 
+                <Icon
                     className="size-5 text-white group-hover:scale-110 transition-all"
                 />
+                <span className="text-[11px] text-white group-hover:text-accent">
+                    {label}
+                </span>
             </Button>
-            <span className="text-[11px] text-white group-hover:text-accent">
-                {label}
-            </span>
-        </div>
-    )
-};
+        );
+    }
+);
+
+SidebarButton.displayName = "SidebarButton";

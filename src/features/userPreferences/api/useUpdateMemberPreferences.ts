@@ -1,8 +1,9 @@
 import { useMutation } from "convex/react";
 import { useCallback, useMemo, useState } from "react";
 
-import { api } from "../../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
+import { useAuth } from "@/features/auth/hooks/use-auth";
 
 interface UseUpdateMemberPreferencesProps {
     workspaceId: Id<"workspaces">;
@@ -22,6 +23,7 @@ export const useUpdateMemberPreferences = () => {
     const [data, setData] = useState<ResponseType>(null);
     const [error, setError] = useState<Error | null>(null);
     const [status, setStatus] = useState<"success" | "error" | "settled" | "pending" | null>(null);
+    const { userId } = useAuth();
 
     const isPending = useMemo(() => status === "pending", [status]);
     const isSuccess = useMemo(() => status === "success", [status]);
@@ -37,7 +39,14 @@ export const useUpdateMemberPreferences = () => {
                 setError(null);
                 setStatus("pending");
 
-                const response = await updatePreferences(values);
+                if (!userId) {
+                    throw new Error("User not authenticated");
+                }
+
+                const response = await updatePreferences({
+                    ...values,
+                    userId: userId as Id<"users">,
+                });
                 setData({ success: true }); // Ensure this matches the ResponseType
                 setStatus("success");
                 options?.onSuccess?.({ success: true });
@@ -54,7 +63,7 @@ export const useUpdateMemberPreferences = () => {
                 options?.onSettled?.();
             }
         },
-        [updatePreferences]
+        [updatePreferences, userId]
     );
 
     return {
@@ -67,3 +76,4 @@ export const useUpdateMemberPreferences = () => {
         isSettled,
     };
 };
+

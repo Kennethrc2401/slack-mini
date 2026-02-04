@@ -1,9 +1,11 @@
 import { useMutation } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
+import { useAuth } from "@/features/auth/hooks/use-auth";
 
 export const useUpdateEvent = () => {
     const updateEvent = useMutation(api.events.updateEvent);
+    const { userId } = useAuth();
 
     return (
         eventId: Id<"events">,
@@ -20,6 +22,7 @@ export const useUpdateEvent = () => {
             title: updatedFields.title ?? undefined,
             description: updatedFields.description ?? undefined,
             date: updatedFields.date ?? undefined,
+            userId: userId as Id<"users">,
         });
     };
 };

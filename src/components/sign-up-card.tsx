@@ -8,7 +8,7 @@ import { Separator } from "./ui/separator";
 import { SignInFlow } from "@/features/auth/types";
 import { useState } from "react";
 import { TriangleAlert } from "lucide-react";
-import { useAuthActions } from "@convex-dev/auth/react";
+import { useAuthActions } from "@/features/auth/hooks/use-auth-actions";
 
 interface SignUpCardProps {
     setState: (state: SignInFlow) => void;

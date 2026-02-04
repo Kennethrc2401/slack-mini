@@ -13,12 +13,15 @@ import { toast } from "sonner";
 
 import { useCreateWorkspaceModal } from "../store/use-create-workspace-modal";
 import { useCreateWorkspace } from "../api/use-create-workspace";
+import { useAuth } from "@/features/auth/hooks/use-auth";
+import { Id } from "@convex/_generated/dataModel";
 
 export const CreateWorkspaceModal = () => {
     const router = useRouter();
     const [open, setOpen] = useCreateWorkspaceModal();
     const [name, setName] = useState("");
     const { mutate, isPending } = useCreateWorkspace();
+    const { userId } = useAuth();
 
     // Close modal and reset name
     const handleClose = () => {
@@ -30,8 +33,13 @@ export const CreateWorkspaceModal = () => {
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
+        if (!userId) {
+            toast.error("Please sign in first");
+            return;
+        }
+
         try {
-            const id = await mutate({ name }, {
+            const id = await mutate({ name, userId: userId as Id<"users"> }, {
                 onSuccess: (id) => {
                     toast.success("Workspace created");
                     router.push(`/workspace/${id}`);

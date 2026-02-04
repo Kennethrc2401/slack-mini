@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import { NuqsAdapter } from 'nuqs/adapters/next/pages'
 
 import { useGetWorkspaces } from "@/features/workspaces/api/use-get-workspaces";
 import { useCreateWorkspaceModal } from "@/features/workspaces/store/use-create-workspace-modal";
@@ -26,10 +25,8 @@ export default function Home() {
   }, [workspaceId, isLoading, open, setOpen, router]);
 
   return (
-    <NuqsAdapter>
-       <div className="h-full flex items-center justify-center">
-          <Loader className="size-6 animate-spin text-muted-foreground" />
-        </div>
-    </NuqsAdapter>
+    <div className="h-full flex items-center justify-center">
+      <Loader className="size-6 animate-spin text-muted-foreground" />
+    </div>
   );
 };

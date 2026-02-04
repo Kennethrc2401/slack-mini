@@ -2,6 +2,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import { auth } from "./auth";
+import { Id } from "./_generated/dataModel";
 
 // Mutation to log a mention
 export const createMention = mutation({
@@ -17,7 +18,7 @@ export const createMention = mutation({
 
         const mentioningMember = await ctx.db
             .query("members")
-            .withIndex("by_user_id", (q) => q.eq("userId", userId))
+            .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
             .first();
         if (!mentioningMember) throw new Error("Mentioning member not found");
 

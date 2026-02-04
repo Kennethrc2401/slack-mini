@@ -1,6 +1,7 @@
 import { useMutation } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
+import { useAuth } from "@/features/auth/hooks/use-auth";
 
 interface UseLogActivityProps {
     messageId?: Id<"messages">;
@@ -14,6 +15,7 @@ interface UseLogActivityProps {
 
 export const useLogActivity = () => {
     const logActivity = useMutation(api.activity.logActivity);
+    const { userId } = useAuth();
 
     const handleLogActivity = async ({
         messageId,
@@ -25,6 +27,10 @@ export const useLogActivity = () => {
         initiatorName,
     }: UseLogActivityProps) => {
         try {
+            if (!userId) {
+                throw new Error("User not authenticated");
+            }
+
             await logActivity({
                 messageId,
                 workspaceId,
@@ -33,6 +39,7 @@ export const useLogActivity = () => {
                 initiatorMemberId,
                 actionDetails,
                 initiatorName,
+                userId: userId as Id<"users">,
             });
         } catch (error) {
             console.error("Failed to log activity:", error);
@@ -41,3 +48,4 @@ export const useLogActivity = () => {
 
     return handleLogActivity;
 };
+

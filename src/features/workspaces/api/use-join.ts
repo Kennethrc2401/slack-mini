@@ -1,8 +1,9 @@
 import { useMutation } from "convex/react";
 import { useCallback, useMemo, useState } from "react";
 
-import { api } from "../../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
+import { useAuth } from "@/features/auth/hooks/use-auth";
 
 type RequestType = { 
     workspaceId: Id<"workspaces">,
@@ -29,6 +30,7 @@ export const useJoin = () => {
     const isSettled = useMemo(() => status === "settled", [status]);
 
     const mutation = useMutation(api.workspaces.join);
+    const { userId } = useAuth();
 
     const mutate = useCallback(async (values: RequestType, options?: Options) => {
         try {
@@ -36,15 +38,25 @@ export const useJoin = () => {
             setError(null);
             setStatus("pending");
 
-            const response = await mutation(values);
+            if (!userId) {
+                throw new Error("User not authenticated");
+            }
+
+            const response = await mutation({
+                ...values,
+                userId: userId as Id<"users">,
+            });
 
             // Assuming response is a string
             const workspaceId = response || null;
 
+            setData(workspaceId);
+            setStatus("success");
             options?.onSuccess?.(workspaceId);
 
             return workspaceId;
         } catch (error) {
+            setError(error as Error);
             setStatus("error");
             options?.onError?.(error as Error);
             if (options?.throwError) {
@@ -66,3 +78,4 @@ export const useJoin = () => {
         isSettled,
     };
 };
+

@@ -1,7 +1,6 @@
 // events.ts
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { auth } from "./auth";
 
 // Query events by date
 export const getEventsByDate = query({
@@ -25,10 +24,14 @@ export const createEvent = mutation({
         date: v.string(),
         title: v.string(),
         description: v.optional(v.string()),
+        userId: v.id("users"),
     },
     handler: async (ctx, args) => {
         await ctx.db.insert("events", {
-            ...args,
+            workspaceId: args.workspaceId,
+            date: args.date,
+            title: args.title,
+            description: args.description,
             createdAt: Date.now(),
         });
     },
@@ -48,9 +51,10 @@ export const updateEvent = mutation({
         title: v.optional(v.string()),
         date: v.optional(v.string()), // Assuming date is stored as string in ISO format
         description: v.optional(v.string()),
+        userId: v.id("users"),
     },
     handler: async (ctx, args) => {
-        const userId = await auth.getUserId(ctx);
+        const userId = args.userId;
         if (!userId) throw new Error("Unauthorized");
 
         // Check if the event exists and verify workspace access
@@ -75,9 +79,10 @@ export const deleteEvent = mutation({
     args: {
         eventId: v.id("events"),
         workspaceId: v.id("workspaces"),
+        userId: v.id("users"),
     },
     handler: async (ctx, args) => {
-        const userId = await auth.getUserId(ctx);
+        const userId = args.userId;
         if (!userId) throw new Error("Unauthorized");
 
         // Verify that the event belongs to the workspace

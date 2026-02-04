@@ -1,5 +1,5 @@
 import { useQuery } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 // import { useWorkspaceId } from "@/hooks/use-workspace-id";
 import { Id } from "../../../../convex/_generated/dataModel";
 
@@ -15,3 +15,4 @@ export const useGetEvents = (
 
     return { data, isLoading };
 };
+

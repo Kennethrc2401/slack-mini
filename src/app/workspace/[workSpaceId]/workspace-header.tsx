@@ -2,11 +2,16 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ChevronDown, ListFilter, SquarePen } from "lucide-react";
+import { useRouter } from "next/navigation";
 
-import { Doc } from "../../../../convex/_generated/dataModel";
+import { Doc, Id } from "../../../../convex/_generated/dataModel";
 import { Hint } from "@/components/hint";
 import { PreferencesModal } from "./preferences-modal";
 import { InviteModal } from "./invite-modal";
+import { NewMessageModal } from "./new-message-modal";
+import { FilterConversationsModal } from "./filter-conversations-modal";
+import { useWorkspaceId } from "@/hooks/use-workspace-id";
+import { useGetMembers } from "@/features/members/api/use-get-members";
 
 interface WorkspaceHeaderProps {
     workspace: Doc<"workspaces">;
@@ -14,8 +19,15 @@ interface WorkspaceHeaderProps {
 };
 
 export const WorkspaceHeader = ({ workspace, isAdmin }: WorkspaceHeaderProps) => {
+    const workspaceId = useWorkspaceId();
+    const router = useRouter();
+    const { data: members } = useGetMembers({ workspaceId });
+    
     const [inviteOpen, setInviteOpen] = useState(false);
     const [preferencesOpen, setPreferencesOpen] = useState(false);
+    const [newMessageOpen, setNewMessageOpen] = useState(false);
+    const [filterOpen, setFilterOpen] = useState(false);
+    const [filterText, setFilterText] = useState("");
     
     return (
         <>
@@ -29,6 +41,17 @@ export const WorkspaceHeader = ({ workspace, isAdmin }: WorkspaceHeaderProps) =>
                 open={preferencesOpen}
                 setOpen={setPreferencesOpen}
                 initialValue={workspace.name}
+            />
+            <NewMessageModal
+                open={newMessageOpen}
+                setOpen={setNewMessageOpen}
+                members={members || []}
+            />
+            <FilterConversationsModal
+                open={filterOpen}
+                setOpen={setFilterOpen}
+                filterText={filterText}
+                setFilterText={setFilterText}
             />
             <div className="flex items-center justify-between px-4 h-[49px] gap-0.5">
                 <DropdownMenu>
@@ -90,6 +113,7 @@ export const WorkspaceHeader = ({ workspace, isAdmin }: WorkspaceHeaderProps) =>
                         <Button
                             variant={"transparent"}
                             size={'iconSm'}
+                            onClick={() => setFilterOpen(true)}
                         >
                             <ListFilter className="size-4" />
                         </Button>
@@ -98,6 +122,7 @@ export const WorkspaceHeader = ({ workspace, isAdmin }: WorkspaceHeaderProps) =>
                             <Button
                                 variant={"transparent"}
                                 size={'iconSm'}
+                                onClick={() => setNewMessageOpen(true)}
                             >
                                 <SquarePen className="size-4" />
                             </Button>

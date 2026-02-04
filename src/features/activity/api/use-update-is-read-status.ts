@@ -1,6 +1,7 @@
 import { useMutation } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
+import { useAuth } from "@/features/auth/hooks/use-auth";
 
 interface UseUpdateIsReadStatusProps {
     activityId: Id<"activity">;
@@ -9,10 +10,15 @@ interface UseUpdateIsReadStatusProps {
 
 export const useUpdateIsReadStatus = () => {
     const mutateUpdateIsReadStatus = useMutation(api.activity.update);
+    const { userId } = useAuth();
 
     const updateIsReadStatus = async ({ activityId, isRead }: UseUpdateIsReadStatusProps) => {
         try {
-            await mutateUpdateIsReadStatus({ activityId, isRead });
+            if (!userId) {
+                throw new Error("User not authenticated");
+            }
+
+            await mutateUpdateIsReadStatus({ activityId, isRead, userId: userId as Id<"users"> });
         } catch (error) {
             console.error("Failed to update read status:", error);
         }
@@ -20,3 +26,4 @@ export const useUpdateIsReadStatus = () => {
 
     return { updateIsReadStatus };
 };
+

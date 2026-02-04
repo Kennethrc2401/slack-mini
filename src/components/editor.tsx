@@ -21,10 +21,11 @@ import "quill/dist/quill.snow.css";
 type EditorValue = {
     image: File | null;
     body: string;
+    files?: File[];
 }
  
 interface EditorProps {
-    onSubmit: ({ image, body }: EditorValue) => void;
+    onSubmit: (value: EditorValue) => void;
     onCancel?: () => void;
     placeholder?: string;
     defaultValue?: Delta | Op[];
@@ -49,6 +50,7 @@ const Editor = ({
 
     const [text, setText] = useState("");
     const [image, setImage] = useState<File | null>(null);
+    const [files, setFiles] = useState<File[]>([]);
     const [isToolbarVisible, setIsToolbarVisible] = useState(true);
     
     const submitRef = useRef(onSubmit);
@@ -58,6 +60,7 @@ const Editor = ({
     const containerRef = useRef<HTMLDivElement>(null);
     const disabledRef = useRef(disabled);
     const imageElementRef = useRef<HTMLInputElement>(null);
+    const fileElementRef = useRef<HTMLInputElement>(null);
 
     useLayoutEffect(() => {
         submitRef.current = onSubmit;
@@ -102,6 +105,7 @@ const Editor = ({
                                 submitRef.current?.({
                                     body,
                                     image: addedImage,
+                                    files: Array.from(fileElementRef.current?.files || []),
                                 })
 
                                 return;
@@ -183,6 +187,13 @@ const Editor = ({
                 onChange={(e) => setImage(e.target.files![0])}
                 className="hidden"
             />
+            <input
+                type="file"
+                multiple
+                ref={fileElementRef}
+                onChange={(e) => setFiles(Array.from(e.target.files || []))}
+                className="hidden"
+            />
             <div className={cn(
                 "flex flex-col border border-slate-200 rounded-md overflow-hidden focus-within:border-slate-300 focus-within:shadow-sm transition bg-white",
                 disabled && "opacity-50"
@@ -212,6 +223,31 @@ const Editor = ({
                                 className="rounded-xl overflow-hidden border object-cover"
                             />
                         </div>
+                    </div>
+                )}
+                {files.length > 0 && (
+                    <div className="p-2 space-y-2">
+                        {files.map((file, idx) => (
+                            <div key={idx} className="flex items-center justify-between bg-slate-50 dark:bg-slate-900 p-2 rounded">
+                                <span className="text-sm text-slate-700 dark:text-slate-300 truncate">{file.name}</span>
+                                <Hint label="Remove file">
+                                    <button
+                                        onClick={() => {
+                                            const newFiles = files.filter((_, i) => i !== idx);
+                                            setFiles(newFiles);
+                                            if (fileElementRef.current) {
+                                                const dt = new DataTransfer();
+                                                newFiles.forEach(f => dt.items.add(f));
+                                                fileElementRef.current.files = dt.files;
+                                            }
+                                        }}
+                                        className="text-red-500 hover:text-red-600"
+                                    >
+                                        <XIcon className="size-4" />
+                                    </button>
+                                </Hint>
+                            </div>
+                        ))}
                     </div>
                 )}
                 <div className="flex px-2 pb-2 z-[5]">
@@ -253,7 +289,7 @@ const Editor = ({
                                 disabled={disabled}
                                 size={"iconSm"}
                                 variant={"ghost"}
-                                onClick={() => {}}
+                                onClick={() => fileElementRef.current?.click()}
                             >
                                 <FilePlus className="size-4"/>
                             </Button>
@@ -277,6 +313,7 @@ const Editor = ({
                                     onSubmit({
                                         body: JSON.stringify(quillRef.current?.getContents()),
                                         image,
+                                        files,
                                     })
                                 }}
                                 className="bg-[#007a5a] hover:[#007a5a]/80 text-white"
@@ -299,6 +336,7 @@ const Editor = ({
                                 onSubmit({
                                     body: JSON.stringify(quillRef.current?.getContents()),
                                     image,
+                                    files,
                                 })
                             }}
                         >

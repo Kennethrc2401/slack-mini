@@ -1,4 +1,5 @@
-import { AlertTriangle, HashIcon, Loader, MessageSquareText, SendHorizonal } from "lucide-react";
+import { AlertTriangle, HashIcon, Loader, MessageSquareText, SendHorizonal, FileText } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 import { WorkspaceHeader } from "./workspace-header";
 import { SidebarItem } from "./sidebar-item";
@@ -16,6 +17,7 @@ import { UserItem } from "./user-item";
 import { useMemberId } from "@/hooks/use-member-id";
 
 export const WorkspaceSidebar = () => {
+    const pathname = usePathname();
     const channelId = useChannelId();
     const workspaceId = useWorkspaceId();
     const memberId = useMemberId();
@@ -47,6 +49,9 @@ export const WorkspaceSidebar = () => {
         )
     }
 
+    const isThreadsActive = pathname.includes("/threads");
+    const isDraftsActive = pathname.includes("/drafts");
+
     return (
         <div className="flex flex-col bg-[#5E2C5F] h-full">
             <WorkspaceHeader 
@@ -57,13 +62,23 @@ export const WorkspaceSidebar = () => {
                 <SidebarItem 
                     label="Threads"
                     icon={MessageSquareText}
-                    id="threads" 
-
+                    id="threads"
+                    type="thread"
+                    variant={isThreadsActive ? "active" : "default"}
                 />
                 <SidebarItem 
                     label="Drafts & Sent"
                     icon={SendHorizonal}
-                    id="drafts" 
+                    id="drafts"
+                    type="drafts"
+                    variant={isDraftsActive ? "active" : "default"}
+                />
+                <SidebarItem 
+                    label="Files"
+                    icon={FileText}
+                    id="files"
+                    type="files"
+                    variant={false ? "active" : "default"}
                 />
             </div>
                 <WorkspaceSection

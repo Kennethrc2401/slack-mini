@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { useGetEvents } from "@/features/events/api/use-get-events";
@@ -15,12 +15,13 @@ import { Hint } from "@/components/hint";
 const CalendarPage = () => {
   const workspaceId = useWorkspaceId();
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const fallbackDate = useMemo(() => new Date(), []);
   const [eventTitle, setEventTitle] = useState("");
   const [eventDescription, setEventDescription] = useState("");
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [showEvents, setShowEvents] = useState(false);
 
-  const { data: events, isLoading } = useGetEvents(workspaceId, selectedDate || new Date());
+  const { data: events, isLoading } = useGetEvents(workspaceId, selectedDate ?? fallbackDate);
   const createEvent = useCreateEvent();
   const updateEvent = useUpdateEvent();
   const deleteEvent = useDeleteEvent();
@@ -66,88 +67,128 @@ const CalendarPage = () => {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold flex">
-        <CalendarDays size={24} className="mr-2" />
-        Calendar
-      </h1>
-
-      {/* Input Section */}
-      <div className="mt-4">
-        <input
-          type="text"
-          placeholder="Event Title"
-          value={eventTitle}
-          onChange={(e) => setEventTitle(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleAddOrUpdateEvent()}
-          className="border p-2 rounded mt-2 w-full"
-        />
-        <textarea
-          placeholder="Event Description"
-          value={eventDescription}
-          onChange={(e) => setEventDescription(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleAddOrUpdateEvent()}
-          className="border p-2 rounded mt-2 w-full"
-        />
-        <button
-          onClick={handleAddOrUpdateEvent}
-          className="bg-blue-500 text-white p-2 rounded mt-2"
-        >
-          {editingEventId ? "Update Event" : "Add Event"}
-        </button>
-      </div>
-
-      {/* Calendar */}
-      <div className="mt-4">
-        <Calendar
-          onChange={(value) => handleDateClick(value as Date)}
-          value={selectedDate}
-          tileContent={({ date, view }) => {
-            if (view === "month") {
-              const count = eventCount(date);
-              return count > 0 ? (
-                <Hint
-                  label={`${count} ${count === 1 ? "event" : "events"}`}
-                >
-                  <p className="text-gray-400">{count} {count === 1 ? "event" : "events"}</p>
-                </Hint>
-              ) : null;
-            }
-          }}
-        />
-      </div>
-
-      {/* Events List */}
-      {showEvents && (
-        <div className="mt-4 max-h-96 overflow-y-auto border p-4 rounded shadow-lg">
-          <h2 className="text-xl font-bold">Events on {selectedDate?.toLocaleDateString()}</h2>
-          {isLoading ? (
-            <p>Loading events...</p>
-          ) : (
-            events
-              ?.filter(event => new Date(event.date).toDateString() === selectedDate?.toDateString())
-              .map(event => (
-                <div key={event._id} className="border p-4 rounded shadow-lg my-2">
-                  <h3 className="font-bold text-lg">{event.title}</h3>
-                  <p className="text-gray-700">{event.description}</p>
-                  <p className="text-sm text-gray-500">Date: {new Date(event.date).toLocaleDateString()}</p>
-                  <button
-                    onClick={() => handleEditEvent(event._id, event.title, event.description)}
-                    className="text-blue-500 mr-2 flex items-center"
-                  >
-                    <Edit size={16} className="mr-1" /> Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteEvent(event._id)}
-                    className="text-red-500 flex items-center"
-                  >
-                    <Trash size={16} className="mr-1" /> Delete
-                  </button>
-                </div>
-              ))
-          )}
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="size-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center">
+            <CalendarDays size={20} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold">Calendar</h1>
+            <p className="text-sm text-muted-foreground">
+              Plan events and keep your workspace in sync.
+            </p>
+          </div>
         </div>
-      )}
+        {selectedDate && (
+          <div className="text-sm text-muted-foreground">
+            Selected: <span className="font-medium text-foreground">{selectedDate.toLocaleDateString()}</span>
+          </div>
+        )}
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+        <div className="rounded-2xl border bg-white p-4 shadow-sm">
+          <div className="flex items-center justify-between pb-3">
+            <h2 className="text-lg font-semibold">Month view</h2>
+            <span className="text-xs text-muted-foreground">Click a date to view events</span>
+          </div>
+          <div className="rounded-xl border bg-muted/30 p-3">
+            <Calendar
+              onChange={(value) => handleDateClick(value as Date)}
+              value={selectedDate}
+              tileContent={({ date, view }) => {
+                if (view === "month") {
+                  const count = eventCount(date);
+                  return count > 0 ? (
+                    <Hint label={`${count} ${count === 1 ? "event" : "events"}`}>
+                      <div className="mt-1 flex justify-center">
+                        <span className="inline-flex h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                      </div>
+                    </Hint>
+                  ) : null;
+                }
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="rounded-2xl border bg-white p-4 shadow-sm">
+            <h2 className="text-lg font-semibold">Create event</h2>
+            <p className="text-xs text-muted-foreground">Add details and save to the selected date.</p>
+            <div className="mt-3 space-y-3">
+              <input
+                type="text"
+                placeholder="Event Title"
+                value={eventTitle}
+                onChange={(e) => setEventTitle(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAddOrUpdateEvent()}
+                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+              />
+              <textarea
+                placeholder="Event Description"
+                value={eventDescription}
+                onChange={(e) => setEventDescription(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAddOrUpdateEvent()}
+                className="h-24 w-full rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+              />
+              <button
+                onClick={handleAddOrUpdateEvent}
+                className="w-full rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+              >
+                {editingEventId ? "Update Event" : "Add Event"}
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border bg-white p-4 shadow-sm">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Events</h2>
+              <span className="text-xs text-muted-foreground">
+                {selectedDate ? selectedDate.toLocaleDateString() : "Pick a date"}
+              </span>
+            </div>
+            <div className="mt-3 max-h-[420px] space-y-3 overflow-y-auto pr-1">
+              {!showEvents ? (
+                <p className="text-sm text-muted-foreground">Select a date to see events.</p>
+              ) : isLoading ? (
+                <p className="text-sm text-muted-foreground">Loading events...</p>
+              ) : (
+                events
+                  ?.filter(event => new Date(event.date).toDateString() === selectedDate?.toDateString())
+                  .map(event => (
+                    <div key={event._id} className="rounded-xl border bg-muted/20 p-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <h3 className="text-sm font-semibold">{event.title}</h3>
+                          <p className="text-xs text-muted-foreground">{event.description}</p>
+                          <p className="mt-1 text-[11px] text-muted-foreground">
+                            {new Date(event.date).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <button
+                            onClick={() => handleEditEvent(event._id, event.title, event.description)}
+                            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-indigo-600 hover:bg-indigo-50"
+                          >
+                            <Edit size={14} /> Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteEvent(event._id)}
+                            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-rose-600 hover:bg-rose-50"
+                          >
+                            <Trash size={14} /> Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

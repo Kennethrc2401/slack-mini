@@ -24,7 +24,10 @@ interface MessageListProps {
 };
 
 const formatDateLabel = (dateStr: string) => {
-    const date = new Date(dateStr);
+    // Parse the date string in yyyy-MM-dd format without timezone conversion
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    
     if (isToday(date)) return "Today";
     if (isYesterday(date)) return "Yesterday";
     return format(date, "EEEE, MMMM d");
@@ -98,6 +101,7 @@ export const MessageList = ({
                                 reactions={transformedReactions} // Use the transformed reactions
                                 body={message.body}
                                 image={message.image}
+                                files={message.files}
                                 updatedAt={message.updatedAt}
                                 createdAt={message._creationTime}
                                 isEditing={editingId === message._id}

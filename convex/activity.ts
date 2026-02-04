@@ -1,20 +1,19 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { auth } from "./auth";
 import { Id } from "./_generated/dataModel";
 
 export const getUserActivities = query({
     args: {
         workspaceId: v.id("workspaces"),
+        userId: v.id("users"),
     },
     handler: async (ctx, args) => {
-        const userId = await auth.getUserId(ctx);
-        if (!userId) throw new Error("Unauthorized");
+        const userId = args.userId;
 
         // Get the current member's information
         const currentMember = await ctx.db
             .query("members")
-            .withIndex("by_user_id", (q) => q.eq("userId", userId))
+            .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
             .first();
 
         if (!currentMember) throw new Error("Member not found");
@@ -45,14 +44,14 @@ export const logActivity = mutation({
         initiatorMemberId: v.optional(v.id("members")),
         actionDetails: v.optional(v.string()),
         initiatorName: v.string(),
+        userId: v.id("users"),
     },
     handler: async (ctx, args) => {
-        const userId = await auth.getUserId(ctx);
-        if (!userId) throw new Error("Unauthorized");
+        const userId = args.userId;
 
         const currentMember = await ctx.db
             .query("members")
-            .withIndex("by_user_id", (q) => q.eq("userId", userId))
+            .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
             .first();
 
         if (!currentMember) throw new Error("Current member not found.");
@@ -87,14 +86,14 @@ export const update = mutation({
   args: {
     activityId: v.id("activity"),
     isRead: v.boolean(),
+        userId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    const userId = await auth.getUserId(ctx);
-    if (!userId) throw new Error("Unauthorized");
+        const userId = args.userId;
 
     const currentMember = await ctx.db
       .query("members")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
       .first();
 
     if (!currentMember) throw new Error("Current member not found.");
@@ -108,14 +107,14 @@ export const update = mutation({
 export const remove = mutation({
     args: {
         activityId: v.id("activity"),
+        userId: v.id("users"),
     },
     handler: async (ctx, args) => {
-        const userId = await auth.getUserId(ctx);
-        if (!userId) throw new Error("Unauthorized");
+        const userId = args.userId;
     
         const currentMember = await ctx.db
         .query("members")
-        .withIndex("by_user_id", (q) => q.eq("userId", userId))
+        .withIndex("by_user_id", (q) => q.eq("userId", userId as Id<"users">))
         .first();
     
         if (!currentMember) throw new Error("Current member not found.");

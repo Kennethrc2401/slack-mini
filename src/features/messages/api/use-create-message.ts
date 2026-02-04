@@ -1,12 +1,14 @@
 import { useMutation } from "convex/react";
 import { useCallback, useMemo, useState } from "react";
 
-import { api } from "../../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
+import { useAuth } from "@/features/auth/hooks/use-auth";
 
 type RequestType = {
     body: string;
     image?: Id<"_storage">;
+    files?: Id<"_storage">[];
     workspaceId: Id<"workspaces">;
     channelId?: Id<"channels">;
     parentMessageId?: Id<"messages">;
@@ -33,6 +35,7 @@ export const useCreateMessage = () => {
     const isSettled = useMemo(() => status === "settled", [status]);
 
     const mutation = useMutation(api.messages.create);
+    const { userId } = useAuth();
 
     const mutate = useCallback(async (values: RequestType, options?: Options) => {
         try {
@@ -40,7 +43,14 @@ export const useCreateMessage = () => {
             setError(null);
             setStatus("pending");
 
-            const response = await mutation(values);
+            if (!userId) {
+                throw new Error("User not authenticated");
+            }
+
+            const response = await mutation({
+                ...values,
+                userId: userId as Id<"users">,
+            });
 
             return response;
         } catch (error) {

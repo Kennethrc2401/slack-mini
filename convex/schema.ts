@@ -1,9 +1,9 @@
 import { v } from "convex/values";
-import { authTables } from "@convex-dev/auth/server";
+import { userTables } from "./auth";
 import { defineSchema, defineTable } from "convex/server";
 
 const schema = defineSchema({
-    ...authTables,
+    ...userTables,
     workspaces: defineTable({
         name: v.string(),
         userId: v.id("users"),
@@ -30,6 +30,7 @@ const schema = defineSchema({
     messages: defineTable({
         body: v.string(),
         image: v.optional(v.id("_storage")),
+        files: v.optional(v.array(v.id("_storage"))),
         memberId: v.id("members"),
         workspaceId: v.id("workspaces"),
         channelId: v.optional(v.id("channels")),
@@ -127,10 +128,52 @@ const schema = defineSchema({
                 v.literal("queer"),
             )
         ),
+        notificationsEnabled: v.optional(v.boolean()),
+        soundEnabled: v.optional(v.boolean()),
+        readReceipts: v.optional(v.boolean()),
     })
     .index("by_workspace_id", ["workspaceId"])
     .index("by_member_id", ["memberId"]),
+    drafts: defineTable({
+        body: v.string(),
+        image: v.optional(v.id("_storage")),
+        memberId: v.id("members"),
+        workspaceId: v.id("workspaces"),
+        channelId: v.optional(v.id("channels")),
+        conversationId: v.optional(v.id("conversations")),
+        createdAt: v.number(),
+        updatedAt: v.number(),
+    })
+    .index("by_workspace_id", ["workspaceId"])
+    .index("by_member_id", ["memberId"])
+    .index("by_workspace_id_member_id", ["workspaceId", "memberId"]),
+    automations: defineTable({
+        workspaceId: v.id("workspaces"),
+        userId: v.id("users"),
+        type: v.string(), // "daily-standup", "new-member-welcome", etc.
+        channelId: v.id("channels"),
+        time: v.string(), // "HH:mm" format
+        timezone: v.string(), // "America/New_York", etc.
+        isActive: v.boolean(),
+        createdAt: v.number(),
+        updatedAt: v.number(),
+    })
+    .index("by_workspace_id", ["workspaceId"])
+    .index("by_user_id", ["userId"]),
+    files: defineTable({
+        workspaceId: v.id("workspaces"),
+        uploadedByMemberId: v.id("members"),
+        name: v.string(),
+        fileName: v.string(),
+        fileSize: v.number(), // in bytes
+        fileType: v.string(), // MIME type
+        storageId: v.id("_storage"),
+        createdAt: v.number(),
+        updatedAt: v.number(),
+    })
+    .index("by_workspace_id", ["workspaceId"])
+    .index("by_uploaded_by_member_id", ["uploadedByMemberId"])
+    .index("by_workspace_id_created_at", ["workspaceId", "createdAt"]),
 });
-
 
 export default schema;

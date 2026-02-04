@@ -1,9 +1,12 @@
 import { useQuery } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
+import { useAuthContext } from "../../auth/auth-context";
 
 export const useGetWorkspaces = () => {
-    // Fetch all workspaces using `useQuery`
-    const data = useQuery(api.workspaces.get);
+    const { email } = useAuthContext();
+    
+    // Fetch all workspaces using email-based query
+    const data = useQuery(api.workspaces.getByEmail, email ? { email } : "skip");
     
     // Determine if data is still loading
     const isLoading = data === undefined;

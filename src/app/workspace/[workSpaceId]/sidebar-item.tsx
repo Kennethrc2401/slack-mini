@@ -8,12 +8,12 @@ import { useWorkspaceId } from "@/hooks/use-workspace-id";
 import { cn } from "@/lib/utils";
 
 const sidebarItemVariants = cva(
-    "flex items-center gap-1.5 justify-start font-normal h-7 px-[18px] text-sm overflow-hidden",
+    "flex items-center gap-2 justify-start font-normal h-8 px-4 py-2 text-sm overflow-hidden rounded transition-colors",
     {
         variants: {
             variant: {
-                default: "text-[#f9edffcc]",
-                active: "text-[#481349] bg-white/90 hover:bg-white/90",
+                default: "text-[#f9edffcc] hover:bg-white/10",
+                active: "text-white bg-white/20 hover:bg-white/25",
             }
         },
         defaultVariants: {
@@ -27,6 +27,7 @@ interface SidebarItemProps {
     id: string;
     icon: LucideIcon | IconType;
     variant?: VariantProps<typeof sidebarItemVariants>["variant"];
+    type?: "channel" | "thread" | "drafts" | "files";
 };
 
 export const SidebarItem = ({
@@ -34,8 +35,20 @@ export const SidebarItem = ({
     id,
     icon: Icon,
     variant,
+    type = "channel",
 }: SidebarItemProps) => {
     const workspaceId = useWorkspaceId();
+
+    let href = ``;
+    if (type === "channel") {
+        href = `/workspace/${workspaceId}/channel/${id}`;
+    } else if (type === "thread") {
+        href = `/workspace/${workspaceId}/threads`;
+    } else if (type === "drafts") {
+        href = `/workspace/${workspaceId}/drafts`;
+    } else if (type === "files") {
+        href = `/workspace/${workspaceId}/files`;
+    }
 
     return (
         <Button 
@@ -44,8 +57,8 @@ export const SidebarItem = ({
             className={cn(sidebarItemVariants({ variant }))}
             size={"sm"}
         >
-            <Link href={`/workspace/${workspaceId}/channel/${id}`}>
-                <Icon className="size-3.5 mr-1 shrink-0" />
+            <Link href={href}>
+                <Icon className="size-5 mr-1 shrink-0" />
                 <span className="text-sm truncate">
                     {label}
                 </span>

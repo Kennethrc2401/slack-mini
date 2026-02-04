@@ -11,17 +11,30 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useCurrentUser } from "@/features/auth/api/use-current-user";
+import { useAuth } from "@/features/auth/hooks/use-auth";
 import { useWorkspaceId } from "@/hooks/use-workspace-id";
-import { useAuthActions } from "@convex-dev/auth/react";
 import { Loader, LogOut, Settings, User2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "convex/react";
+import { api } from "@convex/_generated/api";
+import { Id } from "@convex/_generated/dataModel";
 
 export const UserButton = () => {
     const router = useRouter();
-    const { signOut } = useAuthActions();
-    const { data, isLoading } = useCurrentUser();
+    const { userId, signOut } = useAuth();
     const workspaceId = useWorkspaceId();
+    
+    // Get user details from Convex
+    const data = useQuery(
+        api.users.current,
+        userId ? { userId: userId as Id<"users"> } : "skip"
+    );
+    const isLoading = data === undefined;
+
+    const handleSignOut = async () => {
+        signOut();
+        router.push("/auth");
+    };
 
     if (isLoading) {
         return <Loader className="size-4 animate-spin text-muted-foreground" />;
@@ -55,6 +68,7 @@ export const UserButton = () => {
             >
                 <DropdownMenuItem
                     className="h-10"
+                    onClick={() => router.push(`/workspace/${workspaceId}/profile`)}
                 >
                     <User2Icon
                         className="size-4 mr-2 text-[#5C3B58]"
@@ -71,7 +85,7 @@ export const UserButton = () => {
                     Settings
                 </DropdownMenuItem>
                 <DropdownMenuItem
-                    onClick={() => signOut()}
+                    onClick={() => handleSignOut()}
                     className="h-10"
                 >
                     <LogOut 

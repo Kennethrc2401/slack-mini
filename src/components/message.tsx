@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Hint } from "./hint";
 import { Thumbnail } from "./thumbnail";
 import { Toolbar } from "./toolbar";
+import { MessageFiles } from "./message-files";
 import { useUpdateMessage } from "@/features/messages/api/use-update-message.ts";
 import { useRemoveMessage } from "@/features/messages/api/use-delete-message.ts";
 import { useConfirm } from "@/hooks/use-confirm";
@@ -33,6 +34,7 @@ interface MessageProps {
         >;
     body: Doc<"messages">["body"];
     image: string | null | undefined;
+    files?: Array<{ id: string; url: string }>;
     createdAt: Doc<"messages">["_creationTime"];
     updatedAt: Doc<"messages">["updatedAt"];
     isEditing: boolean;
@@ -58,6 +60,7 @@ export const Message = ({
     reactions,
     body,
     image,
+    files,
     createdAt,
     updatedAt,
     isEditing,
@@ -162,6 +165,7 @@ export const Message = ({
                     <div className="flex flex-col w-full">
                         <Renderer value={body} />
                         <Thumbnail url={image} />
+                        <MessageFiles files={files} />
                         {updatedAt ? (
                             <span className="text-xs text-muted-foreground">
                                 (Edited)
@@ -240,24 +244,23 @@ export const Message = ({
                         </div>
                     ) : (
                     <div className="flex flex-col w-full overflow-hidden">
-                        <div className="text-sm">
+                        <div className="text-sm flex items-center gap-2">
                             <button
                                 className="font-bold text-primary hover:underline"
                                 onClick={() => onOpenProfile(memberId)}
                             >
                                 {authorName}
                             </button>
-                            <span>
-                                &nbsp;&nbsp;
-                            </span>
                             <Hint label={formatFullTime(new Date(createdAt))}>
                                 <button className="text-xs text-muted-foreground hover:underline">
                                     {format(new Date(createdAt), "h:mm a")}
                                 </button>
                             </Hint>
-                            <div className="flex flex-col w-full">
-                                <Renderer value={body} />
-                                <Thumbnail url={image} />
+                        </div>
+                        <div className="flex flex-col w-full">
+                            <Renderer value={body} />
+                            <Thumbnail url={image} />
+                            <MessageFiles files={files} />
                                 {updatedAt ? (
                                     <span className="text-xs text-muted-foreground">
                                         (Edited)
@@ -279,7 +282,6 @@ export const Message = ({
                                 />
                             </div>
                         </div>
-                    </div>
                     )}
 
                     {!isEditing && (

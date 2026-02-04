@@ -1,6 +1,5 @@
 import { v } from "convex/values";
 import { mutation, query, QueryCtx } from "./_generated/server";
-import { auth } from "./auth";
 import { Doc, Id } from "./_generated/dataModel";
 import { paginationOptsValidator } from "convex/server";
 
@@ -72,13 +71,10 @@ const getMember = async (
 export const remove = mutation({
     args: {
         id: v.id("messages"),
+        userId: v.id("users"),
     },
     handler: async (ctx, args) => {
-        const userId = await auth.getUserId(ctx);
-
-        if (!userId) {
-            throw new Error("Unauthorized");
-        }
+        const userId = args.userId;
 
         const message = await ctx.db.get(args.id);
 
@@ -86,7 +82,7 @@ export const remove = mutation({
             throw new Error("Message not found");
         }
 
-        const member = await getMember(ctx, message.workspaceId, userId);
+        const member = await getMember(ctx, message.workspaceId, userId as Id<"users">);
 
         if (!member || member?._id !== message.memberId) {
             throw new Error("Unauthorized");
@@ -101,13 +97,10 @@ export const update = mutation({
     args: {
         id: v.id("messages"),
         body: v.string(),
+        userId: v.id("users"),
     },
     handler: async (ctx, args) => {
-        const userId = await auth.getUserId(ctx);
-
-        if (!userId) {
-            throw new Error("Unauthorized");
-        }
+        const userId = args.userId;
 
         const message = await ctx.db.get(args.id);
 
@@ -115,7 +108,7 @@ export const update = mutation({
             throw new Error("Message not found");
         }
 
-        const member = await getMember(ctx, message.workspaceId, userId);
+        const member = await getMember(ctx, message.workspaceId, userId as Id<"users">);
 
         if (!member || member?._id !== message.memberId) {
             throw new Error("Unauthorized");
@@ -133,13 +126,10 @@ export const update = mutation({
 export const getById = query({
     args: {
         id: v.id("messages"),
+        userId: v.id("users"),
     },
     handler: async (ctx, args) => {
-        const userId = await auth.getUserId(ctx);
-
-        if (!userId) {
-            return null;
-        }
+        const userId = args.userId;
         
         const message = await ctx.db.get(args.id);
 
@@ -147,7 +137,7 @@ export const getById = query({
             return null;
         }
 
-        const currentMember = await getMember(ctx, message.workspaceId, userId);
+        const currentMember = await getMember(ctx, message.workspaceId, userId as Id<"users">);
 
         if (!currentMember) {
             return null;
@@ -207,11 +197,19 @@ export const getById = query({
             ({ memberId, ...rest }) => rest,
         );
 
+        const files = message.files 
+            ? await Promise.all(message.files.map(async (fileId) => {
+                const url = await ctx.storage.getUrl(fileId);
+                return { id: fileId, url };
+            }))
+            : undefined;
+
         return {
             ...message,
             image: message.image
                 ? await ctx.storage.getUrl(message.image)
                 : undefined,
+            files,
             user,
             member,
             reactions: reactionsWithoutMemberIdProperty,
@@ -225,13 +223,10 @@ export const get = query({
         conversationId: v.optional(v.id("conversations")),
         parentMessageId: v.optional(v.id("messages")),
         paginationOpts: paginationOptsValidator,
+        userId: v.id("users"),
     },
     handler: async (ctx, args) => {
-        const userId = await auth.getUserId(ctx);
-
-        if (!userId) {
-            throw new Error("Unauthorized");
-        }
+        const userId = args.userId;
 
         let _conversationId = args.conversationId;
 
@@ -271,6 +266,13 @@ export const get = query({
                     const image = message.image 
                             ? await ctx.storage.getUrl(message.image)
                             : undefined;
+                    
+                    const files = message.files 
+                        ? await Promise.all(message.files.map(async (fileId) => {
+                            const url = await ctx.storage.getUrl(fileId);
+                            return { id: fileId, url };
+                        }))
+                        : undefined;
 
                     const reactionsWithCounts = reactions.map((reaction) => {
                         return {
@@ -315,6 +317,7 @@ export const get = query({
                     return {
                         ...message,
                         image,
+                        files,
                         member,
                         user,
                         reactions: reactionsWithoutMemberIdProperty,
@@ -336,19 +339,17 @@ export const create = mutation({
     args: {
         body: v.string(),
         image: v.optional(v.id("_storage")),
+        files: v.optional(v.array(v.id("_storage"))),
         workspaceId: v.id("workspaces"),
         channelId: v.optional(v.id("channels")),
         conversationId: v.optional(v.id("conversations")),
         parentMessageId: v.optional(v.id("messages")),
+        userId: v.id("users"),
     },
     handler: async (ctx, args) => {
-        const userId = await auth.getUserId(ctx);
+        const userId = args.userId;
 
-        if (!userId) {
-            throw new Error("Unauthorized");
-        }
-
-        const member = await getMember(ctx, args.workspaceId, userId);
+        const member = await getMember(ctx, args.workspaceId, userId as Id<"users">);
 
         if (!member) {
             throw new Error("Unauthorized");
@@ -371,6 +372,7 @@ export const create = mutation({
             memberId: member._id,
             body: args.body,
             image: args.image,
+            files: args.files,
             channelId: args.channelId,
             conversationId: _conversationId,
             workspaceId: args.workspaceId,
@@ -379,4 +381,89 @@ export const create = mutation({
 
         return messageId;
     },
-})
+});
+
+export const getThreads = query({
+    args: {
+        workspaceId: v.id("workspaces"),
+        userId: v.id("users"),
+    },
+    handler: async (ctx, args) => {
+        const userId = args.userId;
+
+        // Get all messages that have replies (are parent messages)
+        const allMessages = await ctx.db
+            .query("messages")
+            .withIndex("by_workspace_id", (q) => q.eq("workspaceId", args.workspaceId))
+            .collect();
+
+        // Filter messages that have at least one reply
+        const threadParents = await Promise.all(
+            allMessages.map(async (message) => {
+                const replies = await ctx.db
+                    .query("messages")
+                    .withIndex("by_parent_message_id", (q) =>
+                        q.eq("parentMessageId", message._id)
+                    )
+                    .collect();
+
+                if (replies.length > 0) {
+                    return {
+                        message,
+                        replyCount: replies.length,
+                        lastReply: replies[replies.length - 1],
+                    };
+                }
+                return null;
+            })
+        );
+
+        // Filter out null values and sort by last reply time
+        const threads = threadParents
+            .filter((t) => t !== null)
+            .sort((a, b) => {
+                if (!a || !b) return 0;
+                return b.lastReply._creationTime - a.lastReply._creationTime;
+            });
+
+        // Populate thread data
+        return await Promise.all(
+            threads.map(async (thread) => {
+                if (!thread) return null;
+
+                const member = await populateMember(ctx, thread.message.memberId);
+                const user = member ? await populateUser(ctx, member.userId) : null;
+                const image = thread.message.image
+                    ? await ctx.storage.getUrl(thread.message.image)
+                    : undefined;
+
+                const lastReplyMember = await populateMember(ctx, thread.lastReply.memberId);
+                const lastReplyUser = lastReplyMember
+                    ? await populateUser(ctx, lastReplyMember.userId)
+                    : null;
+
+                return {
+                    _id: thread.message._id,
+                    _creationTime: thread.message._creationTime,
+                    body: thread.message.body,
+                    image,
+                    user: {
+                        _id: user?._id,
+                        name: user?.name,
+                        image: user?.image,
+                    },
+                    replyCount: thread.replyCount,
+                    lastReply: {
+                        timestamp: thread.lastReply._creationTime,
+                        user: {
+                            name: lastReplyUser?.name,
+                            image: lastReplyUser?.image,
+                        },
+                    },
+                    channelId: thread.message.channelId,
+                    conversationId: thread.message.conversationId,
+                };
+            })
+        );
+    },
+});
