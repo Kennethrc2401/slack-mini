@@ -43,7 +43,7 @@ export const SignInCard = ({ setState }: SignInCardProps) => {
                     Login to continue
                 </CardTitle>
                 <CardDescription>
-                    Use your email or another service to continue
+                    Use your email or OAuth to continue
                 </CardDescription>
             </CardHeader>
             {!!error && (
@@ -105,7 +105,7 @@ export const SignInCard = ({ setState }: SignInCardProps) => {
                         Continue with GitHub
                     </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground text-center">
                     Don&apos;t have an account? <span onClick={() => setState("signUp")} className="text-sky-700 hover:underline cursor-pointer">Sign up</span>
                 </p>
             </CardContent>
