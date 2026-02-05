@@ -14,40 +14,36 @@ export const AuthScreen = () => {
     const { userId, signInWithOAuth } = useAuthContext();
     const { data: session, status } = useSession();
     const hasHydrated = useRef(false);
-    const isFirstLoad = useRef(true);
+    const isLoggingOut = useRef(false);
 
     useEffect(() => {
-        // If user is already logged in to Convex, redirect to workspace
-        // BUT: Don't redirect if they're on the logout page (logout param present)
+        // Check if user just logged out via query param
         if (typeof window !== "undefined") {
             const params = new URLSearchParams(window.location.search);
             if (params.has("logout")) {
-                // User is logging out, don't redirect
-                return;
+                isLoggingOut.current = true;
+                // Clean up the URL
+                window.history.replaceState({}, document.title, "/auth");
+                // Reset the flag after 3 seconds to allow re-login
+                const timer = setTimeout(() => {
+                    isLoggingOut.current = false;
+                }, 3000);
+                return () => clearTimeout(timer);
             }
+        }
+    }, []);
+
+    useEffect(() => {
+        // If user is already logged in to Convex, redirect to workspace
+        // BUT: Don't redirect if they're logging out
+        if (isLoggingOut.current) {
+            return;
         }
         
         if (userId) {
             router.push("/");
         }
     }, [router, userId]);
-
-    useEffect(() => {
-        // Track if user just logged out
-        if (typeof window !== "undefined") {
-            const params = new URLSearchParams(window.location.search);
-            if (params.has("logout")) {
-                // Clean up the URL
-                window.history.replaceState({}, document.title, "/auth");
-                // Don't allow immediate re-login for 2 seconds
-                const timer = setTimeout(() => {
-                    isFirstLoad.current = false;
-                }, 2000);
-                return () => clearTimeout(timer);
-            }
-        }
-        isFirstLoad.current = false;
-    }, []);
 
     useEffect(() => {
         // Reset hydration flag when session becomes unauthenticated
@@ -58,10 +54,10 @@ export const AuthScreen = () => {
 
     useEffect(() => {
         // Only sync once per session, and only if authenticated
-        // Don't auto-login if they just logged out (first 2 seconds)
+        // Don't auto-login if they're logging out
         if (hasHydrated.current) return;
-        if (isFirstLoad.current && status === "authenticated") {
-            // User was just logged out, don't auto-login
+        if (isLoggingOut.current && status === "authenticated") {
+            // User is logging out, don't auto-login
             return;
         }
         if (status === "authenticated" && session?.user?.email && !userId) {
