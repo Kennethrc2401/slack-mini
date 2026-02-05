@@ -22,6 +22,7 @@ export const AuthScreen = () => {
             const params = new URLSearchParams(window.location.search);
             if (params.has("logout")) {
                 isLoggingOut.current = true;
+                hasHydrated.current = false; // Reset hydration flag on logout
                 // Clean up the URL
                 window.history.replaceState({}, document.title, "/auth");
                 // Reset the flag after 3 seconds to allow re-login
@@ -55,11 +56,8 @@ export const AuthScreen = () => {
     useEffect(() => {
         // Only sync once per session, and only if authenticated
         // Don't auto-login if they're logging out
-        if (hasHydrated.current) return;
-        if (isLoggingOut.current && status === "authenticated") {
-            // User is logging out, don't auto-login
-            return;
-        }
+        if (hasHydrated.current || isLoggingOut.current) return;
+        
         if (status === "authenticated" && session?.user?.email && !userId) {
             hasHydrated.current = true;
             const email = session.user.email;
