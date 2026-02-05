@@ -18,6 +18,15 @@ export const AuthScreen = () => {
 
     useEffect(() => {
         // If user is already logged in to Convex, redirect to workspace
+        // BUT: Don't redirect if they're on the logout page (logout param present)
+        if (typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has("logout")) {
+                // User is logging out, don't redirect
+                return;
+            }
+        }
+        
         if (userId) {
             router.push("/");
         }
