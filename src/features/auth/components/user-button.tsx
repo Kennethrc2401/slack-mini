@@ -12,6 +12,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/features/auth/hooks/use-auth";
+import { useAuthActions } from "@/features/auth/hooks/use-auth-actions";
 import { useWorkspaceId } from "@/hooks/use-workspace-id";
 import { Loader, LogOut, Settings, User2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -21,7 +22,8 @@ import { Id } from "@convex/_generated/dataModel";
 
 export const UserButton = () => {
     const router = useRouter();
-    const { userId, signOut } = useAuth();
+    const { userId } = useAuth();
+    const { signOut } = useAuthActions();
     const workspaceId = useWorkspaceId();
     
     // Get user details from Convex
@@ -32,8 +34,7 @@ export const UserButton = () => {
     const isLoading = data === undefined;
 
     const handleSignOut = async () => {
-        signOut();
-        router.push("/auth");
+        await signOut();
     };
 
     if (isLoading) {
